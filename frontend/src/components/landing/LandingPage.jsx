@@ -4,8 +4,6 @@ import { Dashboard } from '../dashboard/Dashboard';
 import { NeuralBackground } from '../dashboard/NeuralBackground';
 
 const initialForm = {
-  height_feet: 5,
-  height_inches: 8,
   weight_kg: 72,
   goal_mode: 'cut',
   experience_level: 'beginner',
@@ -20,6 +18,8 @@ export function LandingPage() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [form, setForm] = useState(initialForm);
+  const [heightFeet, setHeightFeet] = useState('');
+  const [heightInches, setHeightInches] = useState('');
   const onboardingRef = useRef(null);
 
   const openOnboarding = () => {
@@ -31,6 +31,10 @@ export function LandingPage() {
   };
 
   const validateForm = () => {
+    if (!heightFeet || !heightInches) {
+      setError('Please select both height fields (feet and inches).');
+      return false;
+    }
     if (!form.weight_kg || Number(form.weight_kg) <= 0) {
       setError('Please enter a valid weight in kg.');
       return false;
@@ -52,17 +56,29 @@ export function LandingPage() {
     }, 220);
 
     try {
-      const res = await api.post('/plans/scan/', { ...form, weight_kg: Number(form.weight_kg) });
+      const payload = {
+        ...form,
+        height_feet: Number(heightFeet),
+        height_inches: Number(heightInches),
+        weight_kg: Number(form.weight_kg),
+        weight: Number(form.weight_kg),
+        goal: form.goal_mode,
+        diet_type: form.diet_preference,
+        level: form.experience_level,
+        workout_type: form.workout_preference,
+      };
+      const res = await api.post('/plans/scan/', payload);
       clearInterval(timer);
       setProgress(100);
       setTimeout(() => {
         setResult(res.data);
         setIsLoading(false);
       }, 220);
-    } catch {
+    } catch (err) {
       clearInterval(timer);
       setIsLoading(false);
-      setError('Unable to generate your AI plan. Please try again.');
+      const backendMessage = err?.response?.data?.detail || err?.response?.data?.message || err?.response?.data?.error || (typeof err?.response?.data === 'string' ? err.response.data : null);
+      setError(backendMessage || 'API unreachable. Please check your connection and try again.');
     }
   };
 
@@ -86,15 +102,21 @@ export function LandingPage() {
           <section ref={onboardingRef} className='bg-[#14532d] rounded-2xl p-5 sm:p-6 mt-6'>
             <p className='field-label text-white'>Body Scan Setup</p>
             <div className='grid sm:grid-cols-2 gap-3 mt-3'>
-              <select className='premium-input' value={form.height_feet} onChange={(e) => setForm({ ...form, height_feet: Number(e.target.value) })}>{[4, 5, 6, 7, 8].map((v) => <option key={v}>{v} ft</option>)}</select>
-              <select className='premium-input' value={form.height_inches} onChange={(e) => setForm({ ...form, height_inches: Number(e.target.value) })}>{Array.from({ length: 12 }, (_, i) => i).map((v) => <option key={v}>{v} in</option>)}</select>
-              <div className='relative sm:col-span-2'><input className='premium-input pr-10' type='number' value={form.weight_kg} onChange={(e) => setForm({ ...form, weight_kg: Number(e.target.value) })} /><span className='suffix'>kg</span></div>
+              <select className='premium-input min-h-12 text-base' value={heightFeet} onChange={(e) => setHeightFeet(e.target.value)}>
+                <option value=''>Feet</option>
+                {[4, 5, 6, 7, 8].map((v) => <option key={v} value={String(v)}>{v} ft</option>)}
+              </select>
+              <select className='premium-input min-h-12 text-base' value={heightInches} onChange={(e) => setHeightInches(e.target.value)}>
+                <option value=''>Inches</option>
+                {Array.from({ length: 12 }, (_, i) => i).map((v) => <option key={v} value={String(v)}>{v} in</option>)}
+              </select>
+              <div className='relative sm:col-span-2'><input className='premium-input pr-10 min-h-12 text-base' type='number' value={form.weight_kg} onChange={(e) => setForm({ ...form, weight_kg: Number(e.target.value) })} /><span className='suffix'>kg</span></div>
             </div>
             <div className='mt-4 grid sm:grid-cols-3 gap-2'>{[['cut', 'Fat Loss'], ['bulk', 'Muscle Gain'], ['maintain', 'Maintain']].map(([v, t]) => <button type='button' key={v} onClick={() => setForm({ ...form, goal_mode: v })} className={`segment-pill ${form.goal_mode === v ? 'segment-pill-active' : ''}`}>{t}</button>)}</div>
             <div className='mt-3 grid sm:grid-cols-3 gap-2'>{['veg', 'non_veg', 'eggetarian'].map((v) => <button type='button' key={v} onClick={() => setForm({ ...form, diet_preference: v })} className={`segment-pill ${form.diet_preference === v ? 'segment-pill-active' : ''}`}>{v.replace('_', '-')}</button>)}</div>
             <div className='mt-3 grid sm:grid-cols-3 gap-2'>{['beginner', 'intermediate', 'advanced'].map((v) => <button type='button' key={v} onClick={() => setForm({ ...form, experience_level: v === 'advanced' ? 'intermediate' : v })} className={`segment-pill ${form.experience_level === (v === 'advanced' ? 'intermediate' : v) ? 'segment-pill-active' : ''}`}>{v}</button>)}</div>
             <div className='mt-3 grid sm:grid-cols-2 gap-2'><button type='button' onClick={() => setForm({ ...form, workout_preference: 'gym' })} className={`segment-pill ${form.workout_preference === 'gym' ? 'segment-pill-active' : ''}`}>Gym Workout</button><button type='button' onClick={() => setForm({ ...form, workout_preference: 'home' })} className={`segment-pill ${form.workout_preference === 'home' ? 'segment-pill-active' : ''}`}>Home Workout</button></div>
-            <button type='button' className='generate-cta w-full mt-6' onClick={generatePlan}>Generate My AI Plan</button>
+            <button type='button' className='generate-cta w-full mt-6 min-h-12 text-base' onClick={generatePlan}>Generate My AI Plan</button>
             {error && <p className='text-rose-200 text-sm mt-3'>{error}</p>}
           </section>
         )}
