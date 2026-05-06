@@ -1,0 +1,3 @@
+from django.urls import path
+from .views import AdminMetricsView
+urlpatterns=[path('metrics/', AdminMetricsView.as_view())]
