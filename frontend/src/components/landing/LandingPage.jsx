@@ -6,7 +6,6 @@ import { NeuralBackground } from '../dashboard/NeuralBackground';
 const initialForm = {
   weight_kg: 72,
   goal_mode: 'cut',
-  experience_level: 'beginner',
   diet_preference: 'veg',
   workout_preference: 'gym',
 };
@@ -18,6 +17,7 @@ export function LandingPage() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [form, setForm] = useState(initialForm);
+  const [submittedPayload, setSubmittedPayload] = useState(null);
   const [heightFeet, setHeightFeet] = useState('');
   const [heightInches, setHeightInches] = useState('');
   const onboardingRef = useRef(null);
@@ -64,9 +64,9 @@ export function LandingPage() {
         weight: Number(form.weight_kg),
         goal: form.goal_mode,
         diet_type: form.diet_preference,
-        level: form.experience_level,
         workout_type: form.workout_preference,
       };
+      setSubmittedPayload(payload);
       const res = await api.post('/plans/scan/', payload);
       clearInterval(timer);
       setProgress(100);
@@ -114,7 +114,6 @@ export function LandingPage() {
             </div>
             <div className='mt-4 grid sm:grid-cols-3 gap-2'>{[['cut', 'Fat Loss'], ['bulk', 'Muscle Gain'], ['maintain', 'Maintain']].map(([v, t]) => <button type='button' key={v} onClick={() => setForm({ ...form, goal_mode: v })} className={`segment-pill ${form.goal_mode === v ? 'segment-pill-active' : ''}`}>{t}</button>)}</div>
             <div className='mt-3 grid sm:grid-cols-3 gap-2'>{['veg', 'non_veg', 'eggetarian'].map((v) => <button type='button' key={v} onClick={() => setForm({ ...form, diet_preference: v })} className={`segment-pill ${form.diet_preference === v ? 'segment-pill-active' : ''}`}>{v.replace('_', '-')}</button>)}</div>
-            <div className='mt-3 grid sm:grid-cols-3 gap-2'>{['beginner', 'intermediate', 'advanced'].map((v) => <button type='button' key={v} onClick={() => setForm({ ...form, experience_level: v === 'advanced' ? 'intermediate' : v })} className={`segment-pill ${form.experience_level === (v === 'advanced' ? 'intermediate' : v) ? 'segment-pill-active' : ''}`}>{v}</button>)}</div>
             <div className='mt-3 grid sm:grid-cols-2 gap-2'><button type='button' onClick={() => setForm({ ...form, workout_preference: 'gym' })} className={`segment-pill ${form.workout_preference === 'gym' ? 'segment-pill-active' : ''}`}>Gym Workout</button><button type='button' onClick={() => setForm({ ...form, workout_preference: 'home' })} className={`segment-pill ${form.workout_preference === 'home' ? 'segment-pill-active' : ''}`}>Home Workout</button></div>
             <button type='button' className='generate-cta w-full mt-6 min-h-12 text-base' onClick={generatePlan}>Generate My AI Plan</button>
             {error && <p className='text-rose-200 text-sm mt-3'>{error}</p>}
@@ -132,7 +131,7 @@ export function LandingPage() {
           </section>
         )}
 
-        {result && <Dashboard data={result} payload={form} workoutPreference={form.workout_preference} />}
+        {result && <Dashboard data={result} payload={submittedPayload || form} workoutPreference={form.workout_preference} />}
       </div>
     </div>
   );
