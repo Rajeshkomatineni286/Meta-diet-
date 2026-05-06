@@ -23,6 +23,7 @@ export function LandingPage() {
   const onboardingRef = useRef(null);
 
   const openOnboarding = () => {
+    console.log('BUTTON CLICKED');
     setResult(null);
     setError('');
     setShowOnboarding(true);
@@ -43,6 +44,7 @@ export function LandingPage() {
     setError('');
     setIsLoading(true);
     setProgress(5);
+
     let p = 5;
     const timer = setInterval(() => {
       p = Math.min(95, p + 8);
@@ -67,25 +69,22 @@ export function LandingPage() {
   return (
     <div className='min-h-screen bg-[#050505] text-white relative'>
       <NeuralBackground />
-      <div className='relative z-10 max-w-6xl mx-auto px-4 py-8 md:py-12'>
-        <section className='hero-grid gap-10 items-center'>
-          <div className='space-y-5'>
-            <p className='coach-label'>METADIET AI</p>
-            <h1 className='hero-title'>Upgrade Your Body Like Software.</h1>
-            <p className='coach-subtitle'>Your AI coach builds a personalized fat-loss, muscle-building, and nutrition system designed specifically for your body.</p>
-            <button type='button' className='generate-cta px-8 w-full sm:w-auto relative z-20' onClick={openOnboarding}>Start AI Body Scan</button>
-            <div className='flex items-center gap-3 text-sm text-zinc-300'><span>⭐⭐⭐⭐⭐</span><span>Trusted by 25,000+ users</span></div>
-          </div>
-          <div className='glass premium-card rounded-3xl p-6 h-[320px] grid place-items-center'>
-            <div className='holo-body'>
-              <div className='ring ring-a' /><div className='ring ring-b' /><div className='ring ring-c' /><div className='body-core' />
-            </div>
+
+      <div className='relative z-10 max-w-4xl mx-auto px-4 py-6 sm:py-10'>
+        <section className='bg-[#111827] rounded-2xl p-5 sm:p-8'>
+          <p className='coach-label'>METADIET AI</p>
+          <h1 className='hero-title'>Upgrade Your Body Like Software.</h1>
+          <p className='coach-subtitle'>Your AI coach builds a personalized fat-loss, muscle-building, and nutrition system designed specifically for your body.</p>
+          <div className='relative z-50 mt-5'>
+            <button type='button' onClick={openOnboarding} className='generate-cta w-full sm:w-auto px-8'>
+              Start AI Body Scan
+            </button>
           </div>
         </section>
 
         {showOnboarding && !isLoading && !result && (
-          <section ref={onboardingRef} className='onboarding-card max-w-3xl mx-auto mt-8'>
-            <p className='field-label'>Body Scan Setup</p>
+          <section ref={onboardingRef} className='bg-[#14532d] rounded-2xl p-5 sm:p-6 mt-6'>
+            <p className='field-label text-white'>Body Scan Setup</p>
             <div className='grid sm:grid-cols-2 gap-3 mt-3'>
               <select className='premium-input' value={form.height_feet} onChange={(e) => setForm({ ...form, height_feet: Number(e.target.value) })}>{[4, 5, 6, 7, 8].map((v) => <option key={v}>{v} ft</option>)}</select>
               <select className='premium-input' value={form.height_inches} onChange={(e) => setForm({ ...form, height_inches: Number(e.target.value) })}>{Array.from({ length: 12 }, (_, i) => i).map((v) => <option key={v}>{v} in</option>)}</select>
@@ -96,18 +95,18 @@ export function LandingPage() {
             <div className='mt-3 grid sm:grid-cols-3 gap-2'>{['beginner', 'intermediate', 'advanced'].map((v) => <button type='button' key={v} onClick={() => setForm({ ...form, experience_level: v === 'advanced' ? 'intermediate' : v })} className={`segment-pill ${form.experience_level === (v === 'advanced' ? 'intermediate' : v) ? 'segment-pill-active' : ''}`}>{v}</button>)}</div>
             <div className='mt-3 grid sm:grid-cols-2 gap-2'><button type='button' onClick={() => setForm({ ...form, workout_preference: 'gym' })} className={`segment-pill ${form.workout_preference === 'gym' ? 'segment-pill-active' : ''}`}>Gym Workout</button><button type='button' onClick={() => setForm({ ...form, workout_preference: 'home' })} className={`segment-pill ${form.workout_preference === 'home' ? 'segment-pill-active' : ''}`}>Home Workout</button></div>
             <button type='button' className='generate-cta w-full mt-6' onClick={generatePlan}>Generate My AI Plan</button>
-            {error && <p className='text-rose-300 text-sm mt-3'>{error}</p>}
+            {error && <p className='text-rose-200 text-sm mt-3'>{error}</p>}
           </section>
         )}
 
         {isLoading && (
-          <section className='onboarding-card max-w-3xl mx-auto mt-8 text-center py-12'>
+          <section className='bg-[#1e3a8a] rounded-2xl p-6 mt-6 text-center'>
             <div className='scan-loader mx-auto mb-4' />
             <p className='text-lg'>Analyzing body profile...</p>
-            <p className='text-zinc-400 text-sm mt-2'>Building nutrition system...</p>
-            <p className='text-zinc-400 text-sm'>Creating workout engine...</p>
-            <p className='text-zinc-400 text-sm'>Finalizing transformation plan...</p>
-            <div className='mt-4 h-2 w-full bg-white/10 rounded-full overflow-hidden'><div className='h-full bg-gradient-to-r from-cyan-400 to-violet-400' style={{ width: `${progress}%` }} /></div>
+            <p className='text-zinc-200 text-sm mt-2'>Building nutrition system...</p>
+            <p className='text-zinc-200 text-sm'>Creating workout engine...</p>
+            <p className='text-zinc-200 text-sm'>Finalizing transformation plan...</p>
+            <div className='mt-4 h-2 w-full bg-white/20 rounded-full overflow-hidden'><div className='h-full bg-white' style={{ width: `${progress}%` }} /></div>
           </section>
         )}
 
