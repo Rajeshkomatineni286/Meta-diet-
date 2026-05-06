@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const rawBase = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '');
+const fallbackBase = 'https://metadiet-backend.onrender.com';
+const rawBase = (import.meta.env.VITE_API_URL || fallbackBase).replace(/\/$/, '');
 const baseURL = rawBase.endsWith('/api/v1') ? rawBase : `${rawBase}/api/v1`;
 
 const api = axios.create({
@@ -12,23 +13,17 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const networkError = !error?.response;
     console.error('API Error:', {
+      baseURL,
       url: error?.config?.url,
       method: error?.config?.method,
       status: error?.response?.status,
       data: error?.response?.data,
-      message: error?.message,
+      message: networkError ? 'Network error/CORS blocked or backend unreachable' : error?.message,
     });
     return Promise.reject(error);
   }
 );
-
-export const setToken = (token) => {
-  if (token) {
-    api.defaults.headers.common.Authorization = `Bearer ${token}`;
-  } else {
-    delete api.defaults.headers.common.Authorization;
-  }
-};
 
 export default api;
