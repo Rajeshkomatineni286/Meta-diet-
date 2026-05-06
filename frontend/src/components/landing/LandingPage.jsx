@@ -36,12 +36,15 @@ export function LandingPage() {
       setStatusMsg(scan.data?.message || 'Neural Body System initialized successfully.');
     } catch (e) {
       const data = e?.response?.data;
-      const detail = data?.detail || (typeof data === 'object' ? Object.values(data).flat().join(' ') : '') || 'System initialization failed. Please retry.';
-      console.error('POST /plans/scan failed:', {
-        message: e?.message,
-        status: e?.response?.status,
-        data,
+      const detail = data?.detail || data?.message || (typeof data === 'object' ? Object.entries(data).map(([k,v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ') : '') || e?.message || 'Unknown API error';
+      console.error('POST /api/v1/plans/scan/ failed', {
+        endpoint: '/api/v1/plans/scan/',
         payload,
+        request: e?.config,
+        status: e?.response?.status,
+        responseHeaders: e?.response?.headers,
+        responseData: data,
+        message: e?.message,
       });
       setError(detail);
       setStatusMsg('');
