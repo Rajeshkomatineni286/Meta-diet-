@@ -6,6 +6,11 @@ from .serializers import BodyScanSerializer, PlanSerializer
 from .models import Plan
 from .services import compute_bmi, generate_ai_plan
 
+class PlansRootView(APIView):
+    def get(self, request):
+        plans = Plan.objects.filter(user=request.user).order_by('-created_at')[:20]
+        return Response({'count': plans.count(), 'results': PlanSerializer(plans, many=True).data})
+
 class BodyScanView(APIView):
     def post(self, request):
         serializer = BodyScanSerializer(data=request.data)
