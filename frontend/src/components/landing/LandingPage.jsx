@@ -4,75 +4,33 @@ import api from '../../lib/api';
 import { Dashboard } from '../dashboard/Dashboard';
 import { NeuralBackground } from '../dashboard/NeuralBackground';
 
+const heightOptions = [{label:'4 ft',cm:122},{label:'4.5 ft',cm:137},{label:'5 ft',cm:152},{label:'5.5 ft',cm:167},{label:'6 ft',cm:183},{label:'6.5 ft',cm:198},{label:'7 ft',cm:213},{label:'7.5 ft',cm:229},{label:'8 ft',cm:244}];
+
 export function LandingPage() {
-  const [form, setForm] = useState({ height_cm: 172, weight_kg: 74, goal_mode: 'rebuild' });
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState('');
-  const [statusMsg, setStatusMsg] = useState('');
+  const [form, setForm] = useState({ height_cm: 167, weight_kg: 72, goal_mode: 'cut', diet_preference: 'veg', experience_level: 'beginner' });
+  const [loading, setLoading] = useState(false); const [result, setResult] = useState(null); const [error, setError] = useState(''); const [statusMsg, setStatusMsg] = useState('');
 
   const initialize = async () => {
-    const payload = {
-      height_cm: Number.parseInt(String(form.height_cm), 10),
-      weight_kg: Number.parseFloat(String(form.weight_kg)),
-      goal_mode: String(form.goal_mode).toLowerCase(),
-    };
-
-    if (!Number.isFinite(payload.height_cm) || !Number.isFinite(payload.weight_kg) || !['cut', 'bulk', 'rebuild'].includes(payload.goal_mode)) {
-      setError('Please enter valid height, weight, and goal mode.');
-      setStatusMsg('');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setStatusMsg('Submitting body scan...');
-
-    try {
-      console.log('POST /plans/scan payload:', payload);
-      const scan = await api.post('/plans/scan/', payload, { headers: { 'Content-Type': 'application/json' } });
-      console.log('POST /plans/scan success:', scan.data);
-      setResult(scan.data);
-      setStatusMsg(scan.data?.message || 'Neural Body System initialized successfully.');
-    } catch (e) {
-      const data = e?.response?.data;
-      const detail = data?.detail || data?.message || (typeof data === 'object' ? Object.entries(data).map(([k,v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ') : '') || e?.message || 'Unknown API error';
-      console.error('POST /api/v1/plans/scan/ failed', {
-        endpoint: '/api/v1/plans/scan/',
-        payload,
-        request: e?.config,
-        status: e?.response?.status,
-        responseHeaders: e?.response?.headers,
-        responseData: data,
-        message: e?.message,
-      });
-      setError(detail);
-      setStatusMsg('');
-      setResult(null);
-    } finally {
-      setLoading(false);
-    }
+    const payload = { height_cm: Number(form.height_cm), weight_kg: Number(form.weight_kg), goal_mode: form.goal_mode, diet_preference: form.diet_preference, experience_level: form.experience_level };
+    setLoading(true); setError(''); setStatusMsg('Generating your personalized coach...');
+    try { const res = await api.post('/plans/scan/', payload, { headers: { 'Content-Type': 'application/json' } }); setResult(res.data); setStatusMsg(res.data.message); }
+    catch (e) { const d=e?.response?.data; setError(d?.detail || Object.entries(d||{}).map(([k,v])=>`${k}: ${Array.isArray(v)?v.join(','):v}`).join(' | ') || e.message); }
+    finally { setLoading(false); }
   };
 
-  return <div className="min-h-screen bg-[#050505] text-white px-4 py-5 sm:py-8 md:p-10 relative">
-    <NeuralBackground />
-    <motion.div initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{duration:.6}} className="relative z-10 max-w-6xl mx-auto glass panel p-5 sm:p-7 md:p-10 rounded-3xl shadow-neon cinematic-border">
-      <p className="label">INITIALIZING NEURAL BODY OS...</p>
-      <h1 className="text-[2rem] sm:text-5xl md:text-7xl leading-[1.05] font-semibold mt-4 gradient-text tracking-tight">Upgrade Your Body Like Software</h1>
-      <p className="text-zinc-300 mt-4 max-w-2xl text-sm sm:text-base leading-relaxed">Instant onboarding mode. No account required for your first body scan.</p>
-      <div className="grid md:grid-cols-3 gap-3 mt-7">
-        <input className="hud-input" placeholder="Height cm" type="number" value={form.height_cm} onChange={e=>setForm({...form,height_cm:e.target.value})} />
-        <input className="hud-input" placeholder="Weight kg" type="number" value={form.weight_kg} onChange={e=>setForm({...form,weight_kg:e.target.value})} />
-        <select className="hud-input" value={form.goal_mode} onChange={e=>setForm({...form,goal_mode:e.target.value})}><option value="cut">Cut</option><option value="bulk">Bulk</option><option value="rebuild">Rebuild</option></select>
+  return <div className="min-h-screen bg-[#050505] text-white px-4 py-6 md:p-10 relative"><NeuralBackground />
+    <motion.div initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} className="relative z-10 max-w-5xl mx-auto glass premium-card p-5 sm:p-7 rounded-3xl">
+      <p className="label">Initializing Neural Body OS</p>
+      <h1 className="text-3xl sm:text-5xl font-semibold mt-3">Your Premium Transformation Coach</h1>
+      <div className="grid md:grid-cols-2 gap-3 mt-6">
+        <div><label className='text-sm text-zinc-300'>Height</label><select className='hud-input mt-1' value={form.height_cm} onChange={e=>setForm({...form,height_cm:e.target.value})}>{heightOptions.map(h=><option key={h.cm} value={h.cm}>{h.label}</option>)}</select></div>
+        <div><label className='text-sm text-zinc-300'>Current Weight (kg)</label><input className='hud-input mt-1' type='number' value={form.weight_kg} onChange={e=>setForm({...form,weight_kg:e.target.value})} /></div>
+        <div><label className='text-sm text-zinc-300'>Goal</label><div className='mt-1 grid grid-cols-3 gap-2'>{[['cut','Lose Fat'],['bulk','Build Muscle'],['maintain','Maintain Weight']].map(([v,l])=><button key={v} onClick={()=>setForm({...form,goal_mode:v})} className={`px-3 py-2 rounded-xl text-sm ${form.goal_mode===v?'bg-white text-black':'bg-white/10'}`}>{l}</button>)}</div></div>
+        <div><label className='text-sm text-zinc-300'>Diet Preference</label><select className='hud-input mt-1' value={form.diet_preference} onChange={e=>setForm({...form,diet_preference:e.target.value})}><option value='veg'>Veg</option><option value='non_veg'>Non-Veg</option><option value='eggetarian'>Eggetarian</option></select></div>
       </div>
-      <button onClick={initialize} disabled={loading} className="mt-6 w-full sm:w-auto px-8 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:scale-[1.02] hover:shadow-[0_0_30px_#22d3ee55] transition-all duration-300 disabled:opacity-60">
-        {loading ? <span className="inline-flex items-center gap-2"><span className="loader"/> Neural Processing...</span> : 'Initialize Your Body System'}
-      </button>
-      {statusMsg && <p className="mt-3 text-emerald-300 text-sm">{statusMsg}</p>}
-      {error && <p role="alert" className="mt-3 text-rose-300 text-sm">{error}</p>}
-      <AnimatePresence mode='wait'>
-        {result && <Dashboard data={result} goalMode={form.goal_mode} />}
-      </AnimatePresence>
-    </motion.div>
-  </div>;
+      <button onClick={initialize} disabled={loading} className='mt-6 px-8 py-3 rounded-full bg-white text-black font-medium'>{loading?'Analyzing...':'Initialize Your Body System'}</button>
+      {statusMsg && <p className='mt-3 text-emerald-300 text-sm'>{statusMsg}</p>}
+      {error && <p className='mt-3 text-rose-300 text-sm'>{error}</p>}
+      <AnimatePresence>{result && <Dashboard data={result} />}</AnimatePresence>
+    </motion.div></div>;
 }

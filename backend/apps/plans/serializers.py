@@ -2,9 +2,11 @@ from rest_framework import serializers
 from .models import Plan
 
 class BodyScanSerializer(serializers.Serializer):
-    height_cm = serializers.IntegerField(min_value=90, max_value=240)
-    weight_kg = serializers.FloatField(min_value=25, max_value=300)
-    goal_mode = serializers.ChoiceField(choices=['cut','bulk','rebuild'])
+    height_cm = serializers.IntegerField(min_value=120, max_value=245)
+    weight_kg = serializers.FloatField(min_value=30, max_value=250)
+    goal_mode = serializers.ChoiceField(choices=['cut','bulk','maintain'])
+    diet_preference = serializers.ChoiceField(choices=['veg', 'non_veg', 'eggetarian'])
+    experience_level = serializers.ChoiceField(choices=['beginner', 'intermediate'])
 
 class PlanSerializer(serializers.ModelSerializer):
     class Meta:

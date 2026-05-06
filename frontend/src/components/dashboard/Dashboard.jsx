@@ -1,85 +1,22 @@
 import { motion } from 'framer-motion';
 
-const Card = ({ title, children, className = '' }) => (
-  <motion.section
-    initial={{ opacity: 0, y: 12 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.45 }}
-    className={`glass premium-card p-5 md:p-6 ${className}`}
-  >
-    <p className="label">{title}</p>
-    <div className="mt-3">{children}</div>
-  </motion.section>
-);
-
-const recoveryLabel = (score = 0) => score >= 80 ? 'Excellent' : score >= 65 ? 'Moderate' : 'Low';
+const Card = ({title, children}) => <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} className='glass premium-card p-5 rounded-2xl'><p className='label'>{title}</p><div className='mt-3'>{children}</div></motion.div>
 
 export function Dashboard({ data }) {
-  const core = data?.body_core || {};
-  const nutrition = data?.nutrition_matrix || {};
-  const metabolism = data?.metabolism_engine || {};
-  const recovery = data?.recovery_intelligence || {};
-  const timeline = data?.timeline || [];
-  const actions = (data?.recommendations || []).slice(0, 3);
-
-  return (
-    <div className="mt-8 space-y-4 md:space-y-5">
-      <Card title="Body Score" className="relative overflow-hidden">
-        <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-400/10 blur-2xl" />
-        <div className="flex items-center gap-5">
-          <div className="score-ring">
-            <div className="score-ring-inner">
-              <div className="text-3xl font-semibold">{core.optimization_score ?? '--'}</div>
-            </div>
-          </div>
-          <div>
-            <p className="text-zinc-100 text-lg md:text-xl font-medium">{core.goal_mode ? `${core.goal_mode.toUpperCase()} protocol active` : 'Body optimization active'}</p>
-            <p className="text-zinc-400 text-sm mt-1">Your body is responding to this strategy. Keep daily consistency to compound progress.</p>
-          </div>
-        </div>
-      </Card>
-
-      <div className="grid md:grid-cols-2 gap-4 md:gap-5">
-        <Card title="Daily Calorie Target">
-          <p className="metric-main">{nutrition.calories ?? '--'} kcal</p>
-          <p className="metric-sub">Calculated for your current goal and metabolic profile.</p>
-        </Card>
-        <Card title="Protein Target">
-          <p className="metric-main">{nutrition.protein_g ?? '--'} g</p>
-          <p className="metric-sub">Supports satiety, muscle preservation, and recovery quality.</p>
-        </Card>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-4 md:gap-5">
-        <Card title="Recovery Status">
-          <p className="metric-main">{recoveryLabel(recovery.recovery_score)} <span className="text-base text-zinc-400">({recovery.recovery_score ?? '--'})</span></p>
-          <p className="metric-sub">Hydration target: {recovery.hydration_liters ?? '--'}L. Prioritize sleep regularity tonight.</p>
-        </Card>
-        <Card title="Metabolic State">
-          <p className="metric-main">{metabolism.classification?.replace('-', ' ') || '--'}</p>
-          <p className="metric-sub">Your engine is tuned for sustainable progress, not short-term spikes.</p>
-        </Card>
-      </div>
-
-      <Card title="Daily Actions">
-        <ul className="space-y-2">
-          {actions.map((a, i) => <li key={a} className="text-zinc-200 text-sm md:text-base flex gap-2"><span className="text-cyan-300">{i + 1}.</span>{a}</li>)}
-        </ul>
-      </Card>
-
-      <Card title="Daily Timeline">
-        <div className="space-y-3">
-          {timeline.map((item) => (
-            <div key={item.time} className="flex items-start gap-3">
-              <div className="mt-1 h-2 w-2 rounded-full bg-cyan-300" />
-              <div>
-                <p className="text-zinc-100 text-sm md:text-base"><span className="text-cyan-300 mr-2">{item.time}</span>{item.title}</p>
-                <p className="text-zinc-500 text-xs md:text-sm">{item.focus}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
+  const core = data?.body_core || {}; const targets = data?.targets || {};
+  return <div className='mt-8 space-y-4'>
+    <Card title='Suggested Healthy Weight'>
+      <p className='metric-main'>{core.suggested_weight_range || '--'}</p>
+      <p className='metric-sub'>Ideal target weight: {core.ideal_target_weight || '--'}</p>
+      <p className='metric-sub'>{data?.coach_note}</p>
+    </Card>
+    <div className='grid md:grid-cols-3 gap-4'>
+      <Card title='Daily Calories'><p className='metric-main'>{targets.daily_calories} kcal</p></Card>
+      <Card title='Protein Target'><p className='metric-main'>{targets.protein_g} g</p></Card>
+      <Card title='Water Intake'><p className='metric-main'>{targets.water_liters} L</p></Card>
     </div>
-  );
+    <Card title='Weekly Workout Plan'>{(data?.weekly_workout_plan||[]).map(d=><div key={d.day} className='mb-3'><p className='text-zinc-100 font-medium'>{d.day} • {d.focus}</p><ul className='text-zinc-300 text-sm list-disc ml-5'>{d.plan.map(p=><li key={p}>{p}</li>)}</ul></div>)}</Card>
+    <Card title='Daily Diet Plan'>{(data?.daily_diet_plan||[]).map(m=><div key={m.meal} className='mb-3'><p className='text-zinc-100 font-medium'>{m.meal}</p><p className='text-zinc-300 text-sm'>{m.items.join(' • ')}</p></div>)}</Card>
+    <Card title="Today's Actions"><ul className='text-zinc-200 text-sm space-y-2'>{(data?.todays_actions||[]).map(a=><li key={a}>• {a}</li>)}</ul></Card>
+  </div>
 }

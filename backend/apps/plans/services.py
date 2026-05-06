@@ -1,71 +1,62 @@
-from dataclasses import dataclass
 from typing import Dict, List
 
-@dataclass
-class BodyProfile:
-    height_cm: int
-    weight_kg: float
-    goal_mode: str
-    bmi: float
-
-
 def compute_bmi(height_cm: int, weight_kg: float) -> float:
-    meters = height_cm / 100
-    return round(weight_kg / (meters * meters), 2)
+    m = height_cm / 100
+    return round(weight_kg / (m * m), 2)
 
+def healthy_weight_range(height_cm: int):
+    m2 = (height_cm / 100) ** 2
+    low, high = int(18.5 * m2), int(24.9 * m2)
+    return low, high, int((low + high) / 2)
 
-def _metabolism_classification(bmi: float) -> str:
-    if bmi < 18.5:
-        return 'adaptive-rebuild'
-    if bmi < 25:
-        return 'balanced'
-    if bmi < 30:
-        return 'fat-optimization'
-    return 'high-risk-cut'
+def diet_plan(pref: str, goal: str) -> List[dict]:
+    protein = {
+        'veg': ['paneer bhurji', 'dal + curd', 'soya chunks'],
+        'non_veg': ['egg bhurji', 'chicken curry', 'grilled fish'],
+        'eggetarian': ['boiled eggs', 'paneer tikka', 'dal + curd'],
+    }[pref]
+    return [
+        {'meal': 'Breakfast', 'items': ['oats / poha / idli', protein[0], 'banana']},
+        {'meal': 'Lunch', 'items': ['rice or roti', protein[1], 'salad']},
+        {'meal': 'Snack', 'items': ['fruit', 'buttermilk / curd']},
+        {'meal': 'Dinner', 'items': ['vegetables', protein[2], 'curd']},
+    ]
 
+def workout_plan(goal: str, exp: str) -> List[dict]:
+    if goal == 'cut':
+        return [
+            {'day': 'Monday', 'focus': 'Walking + Strength', 'plan': ['40 min brisk walk', 'Squats 3x12', 'Pushups 3x10']},
+            {'day': 'Tuesday', 'focus': 'Cardio', 'plan': ['25 min cycling', 'Core plank 3x40 sec']},
+            {'day': 'Wednesday', 'focus': 'Home Strength', 'plan': ['Lunges 3x12', 'Dumbbell Row 3x12', 'Shoulder Press 3x10']},
+            {'day': 'Thursday', 'focus': 'Active Recovery', 'plan': ['30 min walk', 'Mobility 15 min']},
+            {'day': 'Friday', 'focus': 'Full Body', 'plan': ['Deadlift pattern 3x10', 'Pushups 3x12', 'Glute bridge 3x15']},
+            {'day': 'Saturday', 'focus': 'Cardio + Steps', 'plan': ['30 min jog', '8k-10k steps']},
+        ]
+    return [
+        {'day': 'Monday', 'focus': 'Chest + Triceps', 'plan': ['Bench Press 4x8', 'Incline DB Press 3x10', 'Pushups 3x12', 'Tricep Pushdown 3x12']},
+        {'day': 'Tuesday', 'focus': 'Back + Biceps', 'plan': ['Lat Pulldown 4x10', 'Barbell Row 3x10', 'Seated Row 3x12', 'Bicep Curl 3x12']},
+        {'day': 'Wednesday', 'focus': 'Legs', 'plan': ['Squat 4x8', 'RDL 3x10', 'Leg Press 3x12', 'Calf Raise 3x15']},
+        {'day': 'Thursday', 'focus': 'Shoulders + Core', 'plan': ['Overhead Press 4x8', 'Lateral Raise 3x12', 'Plank 3x45 sec']},
+            {'day': 'Friday', 'focus': 'Push/Pull Mix', 'plan': ['Incline Press 3x10', 'Pull-ups assisted 3x8', 'Tricep dips 3x10', 'Hammer curls 3x12']},
+    ]
 
-def _calorie_target(profile: BodyProfile) -> int:
-    bmr = 10 * profile.weight_kg + 6.25 * profile.height_cm - 5 * 30 + 5
-    tdee = bmr * 1.4
-    delta = {'cut': -350, 'bulk': 300, 'rebuild': 50}[profile.goal_mode]
-    return int(max(1400, tdee + delta))
-
-
-def build_body_intelligence(height_cm: int, weight_kg: float, goal_mode: str) -> Dict:
+def build_body_intelligence(height_cm: int, weight_kg: float, goal_mode: str, diet_preference: str, experience_level: str) -> Dict:
     bmi = compute_bmi(height_cm, weight_kg)
-    profile = BodyProfile(height_cm, weight_kg, goal_mode, bmi)
-    calories = _calorie_target(profile)
-    protein = int(round(weight_kg * (2.2 if goal_mode == 'cut' else 1.9)))
-    fat = int(round(weight_kg * 0.8))
-    carbs = max(80, int((calories - (protein * 4 + fat * 9)) / 4))
-
-    bmi_score = max(40, min(100, int(100 - abs(22 - bmi) * 7)))
-    recovery = max(50, min(95, int(60 + (protein / max(weight_kg, 1) - 1.5) * 25)))
-    performance = max(45, min(95, int(55 + (carbs / 4))))
-    consistency = max(55, min(98, int((bmi_score + recovery) / 2)))
-    optimization = int((bmi_score + recovery + performance + consistency) / 4)
-
-    timeline: List[dict] = [
-        {'time': '07:30', 'title': 'Protein-forward breakfast', 'focus': 'metabolic activation'},
-        {'time': '12:30', 'title': 'Balanced performance lunch', 'focus': 'glucose stability'},
-        {'time': '16:30', 'title': 'Recovery snack', 'focus': 'muscle preservation'},
-        {'time': '20:00', 'title': 'Low-noise dinner', 'focus': 'sleep & recovery'}
-    ]
-
-    recommendations = [
-        f"Target {protein}g protein across 4 feedings",
-        f"Keep daily hydration above {max(2.5, round(weight_kg*0.035,1))}L",
-        f"Use {goal_mode} protocol with weekly body score check-ins",
-    ]
+    low, high, ideal = healthy_weight_range(height_cm)
+    calories = int((22 * weight_kg) + {'cut': -300, 'bulk': 280, 'maintain': 0}[goal_mode])
+    protein = int(weight_kg * (2.0 if goal_mode != 'maintain' else 1.6))
+    water = round(max(2.5, weight_kg * 0.035), 1)
+    mode_label = {'cut': 'Fat-burning mode', 'bulk': 'Muscle-building mode', 'maintain': 'Maintenance mode'}[goal_mode]
 
     return {
-        'body_core': {'bmi': bmi, 'bmi_score': bmi_score, 'optimization_score': optimization, 'goal_mode': goal_mode},
-        'nutrition_matrix': {'calories': calories, 'protein_g': protein, 'carb_g': carbs, 'fat_g': fat},
-        'metabolism_engine': {'classification': _metabolism_classification(bmi), 'metabolic_index': int((bmi_score + performance)/2)},
-        'recovery_intelligence': {'recovery_score': recovery, 'hydration_liters': max(2.5, round(weight_kg*0.035,1))},
-        'performance_signals': {'performance_score': performance, 'consistency_score': consistency},
-        'timeline': timeline,
-        'recommendations': recommendations,
-        'workout_strategy': {'focus': 'strength + zone2', 'sessions_per_week': 4 if goal_mode == 'bulk' else 5},
-        'optimization_insights': {'primary': f"{goal_mode.title()} strategy optimized for current body profile", 'secondary': 'Maintain sleep regularity to improve recovery signal'},
+        'body_core': {'bmi': bmi, 'metabolic_state': mode_label, 'suggested_weight_range': f'{low}-{high} kg', 'ideal_target_weight': f'{ideal} kg'},
+        'targets': {'daily_calories': max(1400, calories), 'protein_g': protein, 'water_liters': water},
+        'daily_diet_plan': diet_plan(diet_preference, goal_mode),
+        'weekly_workout_plan': workout_plan(goal_mode, experience_level),
+        'todays_actions': [
+            f"Hit {max(6500, int(weight_kg*110))} steps",
+            f"Eat {protein}g protein across 3-4 meals",
+            f"Drink {water}L water and sleep 7+ hours",
+        ],
+        'coach_note': 'This is an estimated healthy weight range for your height.'
     }
