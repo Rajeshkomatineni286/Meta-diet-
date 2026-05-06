@@ -1,44 +1,85 @@
 import { motion } from 'framer-motion';
 
-const Section = ({ title, children }) => (
-  <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} className="glass panel p-4 md:p-5">
+const Card = ({ title, children, className = '' }) => (
+  <motion.section
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.45 }}
+    className={`glass premium-card p-5 md:p-6 ${className}`}
+  >
     <p className="label">{title}</p>
     <div className="mt-3">{children}</div>
-  </motion.div>
+  </motion.section>
 );
+
+const recoveryLabel = (score = 0) => score >= 80 ? 'Excellent' : score >= 65 ? 'Moderate' : 'Low';
 
 export function Dashboard({ data }) {
   const core = data?.body_core || {};
   const nutrition = data?.nutrition_matrix || {};
   const metabolism = data?.metabolism_engine || {};
   const recovery = data?.recovery_intelligence || {};
-  const perf = data?.performance_signals || {};
   const timeline = data?.timeline || [];
-  const recs = data?.recommendations || [];
+  const actions = (data?.recommendations || []).slice(0, 3);
 
-  const metrics = [
-    ['BMI', core.bmi], ['Body Score', core.optimization_score], ['Calories', nutrition.calories], ['Protein', nutrition.protein_g],
-    ['Carbs', nutrition.carb_g], ['Fat', nutrition.fat_g], ['Recovery', recovery.recovery_score], ['Performance', perf.performance_score]
-  ];
+  return (
+    <div className="mt-8 space-y-4 md:space-y-5">
+      <Card title="Body Score" className="relative overflow-hidden">
+        <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-400/10 blur-2xl" />
+        <div className="flex items-center gap-5">
+          <div className="score-ring">
+            <div className="score-ring-inner">
+              <div className="text-3xl font-semibold">{core.optimization_score ?? '--'}</div>
+            </div>
+          </div>
+          <div>
+            <p className="text-zinc-100 text-lg md:text-xl font-medium">{core.goal_mode ? `${core.goal_mode.toUpperCase()} protocol active` : 'Body optimization active'}</p>
+            <p className="text-zinc-400 text-sm mt-1">Your body is responding to this strategy. Keep daily consistency to compound progress.</p>
+          </div>
+        </div>
+      </Card>
 
-  return <section className="mt-8 grid lg:grid-cols-12 gap-4 md:gap-5">
-    <div className="lg:col-span-4 space-y-4">
-      <Section title="Body Core">
-        <div className="text-4xl font-semibold glow-cyan">{core.bmi ?? '--'}</div>
-        <div className="text-sm text-zinc-300 mt-1">BMI • Score {core.bmi_score ?? '--'}</div>
-      </Section>
-      <Section title="Metabolism Engine"><p className="text-zinc-200">{metabolism.classification || '--'}</p></Section>
-      <Section title="Recovery Intelligence"><p className="text-zinc-200">Recovery {recovery.recovery_score ?? '--'} • Hydration {recovery.hydration_liters ?? '--'}L</p></Section>
-    </div>
-    <div className="lg:col-span-8 space-y-4">
-      <Section title="Nutrition Matrix">
-        <div className="grid sm:grid-cols-2 gap-3">{metrics.map(([k,v]) => <div key={k} className="bg-white/5 rounded-xl p-3"><p className="text-xs text-zinc-400">{k}</p><p className="text-xl mt-1">{v ?? '--'}</p></div>)}</div>
-      </Section>
-      <div className="grid md:grid-cols-2 gap-4">
-        <Section title="Daily Timeline">{timeline.map((i)=> <div key={i.time} className="mb-2 text-sm"><span className="text-cyan-300">{i.time}</span> {i.title}</div>)}</Section>
-        <Section title="AI Recommendations">{recs.map((r)=> <div key={r} className="mb-2 text-sm">• {r}</div>)}</Section>
+      <div className="grid md:grid-cols-2 gap-4 md:gap-5">
+        <Card title="Daily Calorie Target">
+          <p className="metric-main">{nutrition.calories ?? '--'} kcal</p>
+          <p className="metric-sub">Calculated for your current goal and metabolic profile.</p>
+        </Card>
+        <Card title="Protein Target">
+          <p className="metric-main">{nutrition.protein_g ?? '--'} g</p>
+          <p className="metric-sub">Supports satiety, muscle preservation, and recovery quality.</p>
+        </Card>
       </div>
-      <Section title="Optimization Insights"><p className="text-zinc-200">{data?.optimization_insights?.primary}</p><p className="text-zinc-400 text-sm mt-1">{data?.optimization_insights?.secondary}</p></Section>
+
+      <div className="grid md:grid-cols-2 gap-4 md:gap-5">
+        <Card title="Recovery Status">
+          <p className="metric-main">{recoveryLabel(recovery.recovery_score)} <span className="text-base text-zinc-400">({recovery.recovery_score ?? '--'})</span></p>
+          <p className="metric-sub">Hydration target: {recovery.hydration_liters ?? '--'}L. Prioritize sleep regularity tonight.</p>
+        </Card>
+        <Card title="Metabolic State">
+          <p className="metric-main">{metabolism.classification?.replace('-', ' ') || '--'}</p>
+          <p className="metric-sub">Your engine is tuned for sustainable progress, not short-term spikes.</p>
+        </Card>
+      </div>
+
+      <Card title="Daily Actions">
+        <ul className="space-y-2">
+          {actions.map((a, i) => <li key={a} className="text-zinc-200 text-sm md:text-base flex gap-2"><span className="text-cyan-300">{i + 1}.</span>{a}</li>)}
+        </ul>
+      </Card>
+
+      <Card title="Daily Timeline">
+        <div className="space-y-3">
+          {timeline.map((item) => (
+            <div key={item.time} className="flex items-start gap-3">
+              <div className="mt-1 h-2 w-2 rounded-full bg-cyan-300" />
+              <div>
+                <p className="text-zinc-100 text-sm md:text-base"><span className="text-cyan-300 mr-2">{item.time}</span>{item.title}</p>
+                <p className="text-zinc-500 text-xs md:text-sm">{item.focus}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
     </div>
-  </section>
+  );
 }
