@@ -18,3 +18,11 @@
 .generate-cta{height:3.15rem;border-radius:999px;background:linear-gradient(100deg,#a5f3fc,#c4b5fd);color:#030712;font-weight:650;box-shadow:0 10px 24px rgba(103,232,249,.22);transition:transform .15s ease}
 .generate-cta:active{transform:scale(.99)}
 .neural-net{position:absolute;inset:0;background-image:radial-gradient(circle at 10% 10%, rgba(34,211,238,.20), transparent 30%),radial-gradient(circle at 90% 15%, rgba(168,85,247,.22), transparent 30%);opacity:.45}
+
+.holo-core{position:absolute;inset:0;display:grid;place-items:center}
+.ring{position:absolute;border:1px solid rgba(103,232,249,.35);border-radius:999px;animation:spin 16s linear infinite}
+.ring-a{width:180px;height:180px}.ring-b{width:240px;height:240px;animation-duration:22s;animation-direction:reverse}.ring-c{width:300px;height:300px;animation-duration:28s}
+.float-card{position:absolute;background:rgba(10,10,15,.65);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px);padding:.55rem .7rem;border-radius:.8rem;min-width:110px}
+.fc1{top:12%;left:8%}.fc2{top:8%;right:10%}.fc3{top:45%;left:4%}.fc4{bottom:20%;right:8%}.fc5{bottom:8%;left:28%}
+.scan-loader{width:110px;height:110px;border-radius:999px;border:2px solid rgba(103,232,249,.28);box-shadow:0 0 30px rgba(103,232,249,.2) inset;position:relative}
+.scan-loader::after{content:'';position:absolute;inset:14px;border-radius:999px;border:2px solid rgba(196,181,253,.5);animation:spin 2s linear infinite}
