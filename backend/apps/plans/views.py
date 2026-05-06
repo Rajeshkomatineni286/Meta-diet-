@@ -6,7 +6,7 @@ from rest_framework.permissions import AllowAny
 from django.shortcuts import get_object_or_404
 from .serializers import BodyScanSerializer, PlanSerializer
 from .models import Plan
-from .services import compute_bmi, generate_ai_plan
+from .services import build_body_intelligence
 
 logger = logging.getLogger(__name__)
 
@@ -21,41 +21,28 @@ class BodyScanView(APIView):
     def post(self, request):
         serializer = BodyScanSerializer(data=request.data)
         if not serializer.is_valid():
-            logger.warning('Body scan validation failed', extra={'errors': serializer.errors, 'payload': request.data})
+            logger.warning('Body scan validation failed', extra={'errors': serializer.errors})
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        data = serializer.validated_data
-        bmi = compute_bmi(data['height_cm'], data['weight_kg'])
-        generated = generate_ai_plan(data['goal_mode'], bmi)
-        preview = {
-            'diet_timeline': generated['diet_plan']['timeline'][:2],
-            'workout_blocks': generated['workout_plan']['energy_blocks'][:2]
-        }
-
+        payload = serializer.validated_data
+        intelligence = build_body_intelligence(**payload)
         user = request.user if request.user and request.user.is_authenticated else None
-        plan_id = None
-        locked = True
-
+        plan_id, locked = None, True
         if user:
-            user.height_cm = data['height_cm']
-            user.weight_kg = data['weight_kg']
-            user.goal_mode = data['goal_mode']
-            user.bmi = bmi
+            user.height_cm = payload['height_cm']; user.weight_kg = payload['weight_kg']; user.goal_mode = payload['goal_mode']; user.bmi = intelligence['body_core']['bmi']
             user.save(update_fields=['height_cm', 'weight_kg', 'goal_mode', 'bmi'])
-            plan = Plan.objects.create(user=user, **generated, is_locked=not user.premium_unlocked)
-            plan_id = plan.id
-            locked = plan.is_locked
+            plan = Plan.objects.create(
+                user=user,
+                diet_plan={'timeline': intelligence['timeline'], 'recommendations': intelligence['recommendations']},
+                workout_plan=intelligence['workout_strategy'],
+                calories=intelligence['nutrition_matrix']['calories'],
+                protein_g=intelligence['nutrition_matrix']['protein_g'],
+                fat_g=intelligence['nutrition_matrix']['fat_g'],
+                is_locked=not user.premium_unlocked,
+            )
+            plan_id, locked = plan.id, plan.is_locked
 
-        response = {
-            'bmi': bmi,
-            'goal_mode': data['goal_mode'],
-            'plan_id': plan_id,
-            'locked': locked,
-            'preview': preview,
-            'message': 'Onboarding plan generated successfully.'
-        }
-        logger.info('Body scan generated', extra={'authenticated': bool(user), 'goal_mode': data['goal_mode'], 'bmi': bmi})
-        return Response(response, status=status.HTTP_200_OK)
+        return Response({**intelligence, 'plan_id': plan_id, 'locked': locked, 'message': 'Adaptive body intelligence generated.'})
 
 class PlanDetailView(APIView):
     def get(self, request, pk):
