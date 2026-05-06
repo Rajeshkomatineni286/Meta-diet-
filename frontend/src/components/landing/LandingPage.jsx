@@ -12,22 +12,37 @@ export function LandingPage() {
   const [statusMsg, setStatusMsg] = useState('');
 
   const initialize = async () => {
-    setLoading(true); setError(''); setStatusMsg('Submitting body scan...');
+    const payload = {
+      height_cm: Number(form.height_cm),
+      weight_kg: Number(form.weight_kg),
+      goal_mode: form.goal_mode,
+    };
+
+    setLoading(true);
+    setError('');
+    setStatusMsg('Submitting body scan...');
+
     try {
-      const scan = await api.post('/plans/scan/', {
-        height_cm: Number(form.height_cm),
-        weight_kg: Number(form.weight_kg),
-        goal_mode: form.goal_mode,
-      });
+      console.log('POST /plans/scan payload:', payload);
+      const scan = await api.post('/plans/scan/', payload, { headers: { 'Content-Type': 'application/json' } });
+      console.log('POST /plans/scan success:', scan.data);
       setResult(scan.data);
       setStatusMsg(scan.data?.message || 'Neural Body System initialized successfully.');
     } catch (e) {
       const data = e?.response?.data;
       const detail = data?.detail || (typeof data === 'object' ? Object.values(data).flat().join(' ') : '') || 'System initialization failed. Please retry.';
+      console.error('POST /plans/scan failed:', {
+        message: e?.message,
+        status: e?.response?.status,
+        data,
+        payload,
+      });
       setError(detail);
       setStatusMsg('');
-      console.error('Body scan failed:', e);
-    } finally { setLoading(false); }
+      setResult(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return <div className="min-h-screen bg-[#050505] text-white px-4 py-5 sm:py-8 md:p-10 relative">

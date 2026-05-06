@@ -1,3 +1,4 @@
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -6,6 +7,8 @@ from django.shortcuts import get_object_or_404
 from .serializers import BodyScanSerializer, PlanSerializer
 from .models import Plan
 from .services import compute_bmi, generate_ai_plan
+
+logger = logging.getLogger(__name__)
 
 class PlansRootView(APIView):
     def get(self, request):
@@ -17,9 +20,11 @@ class BodyScanView(APIView):
 
     def post(self, request):
         serializer = BodyScanSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
+        if not serializer.is_valid():
+            logger.warning('Body scan validation failed', extra={'errors': serializer.errors, 'payload': request.data})
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+        data = serializer.validated_data
         bmi = compute_bmi(data['height_cm'], data['weight_kg'])
         generated = generate_ai_plan(data['goal_mode'], bmi)
         preview = {
@@ -41,14 +46,16 @@ class BodyScanView(APIView):
             plan_id = plan.id
             locked = plan.is_locked
 
-        return Response({
+        response = {
             'bmi': bmi,
             'goal_mode': data['goal_mode'],
             'plan_id': plan_id,
             'locked': locked,
             'preview': preview,
             'message': 'Onboarding plan generated successfully.'
-        }, status=status.HTTP_200_OK)
+        }
+        logger.info('Body scan generated', extra={'authenticated': bool(user), 'goal_mode': data['goal_mode'], 'bmi': bmi})
+        return Response(response, status=status.HTTP_200_OK)
 
 class PlanDetailView(APIView):
     def get(self, request, pk):
