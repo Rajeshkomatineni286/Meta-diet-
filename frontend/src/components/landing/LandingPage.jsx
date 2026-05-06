@@ -13,10 +13,16 @@ export function LandingPage() {
 
   const initialize = async () => {
     const payload = {
-      height_cm: Number(form.height_cm),
-      weight_kg: Number(form.weight_kg),
-      goal_mode: form.goal_mode,
+      height_cm: Number.parseInt(String(form.height_cm), 10),
+      weight_kg: Number.parseFloat(String(form.weight_kg)),
+      goal_mode: String(form.goal_mode).toLowerCase(),
     };
+
+    if (!Number.isFinite(payload.height_cm) || !Number.isFinite(payload.weight_kg) || !['cut', 'bulk', 'rebuild'].includes(payload.goal_mode)) {
+      setError('Please enter valid height, weight, and goal mode.');
+      setStatusMsg('');
+      return;
+    }
 
     setLoading(true);
     setError('');
