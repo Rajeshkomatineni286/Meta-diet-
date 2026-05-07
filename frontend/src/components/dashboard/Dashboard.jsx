@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import api from '../../lib/api';
+import { API_BASE_URL } from '../../lib/api';
 
 const Section = ({ title, children }) => (
   <section className='glass premium-card p-[18px] rounded-3xl shadow-xl'>
@@ -43,14 +43,31 @@ export function Dashboard({ data, payload, workoutPreference = 'gym' }) {
   const timeline = data.progress_expectations || [];
 
   const downloadPdf = async () => {
-    const res = await api.post('/plans/export-pdf/', payload, { responseType: 'blob' });
-    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-    const a = document.createElement('a'); a.href = url; a.download = 'metadiet-plan.pdf'; a.click(); URL.revokeObjectURL(url);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/export-plan/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'fitness-plan.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      alert('Unable to download plan');
+    }
   };
 
-  return <div className='mt-8 space-y-8 pb-14'>
+  return <div className='mt-8 space-y-8 pb-28'>
     <Section title='Progress Overview'>
-      <div className='grid grid-cols-2 gap-4'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
         <StatCard icon='🎯' label='Goal' value={p.goal_mode || payload?.goal_mode || '-'} />
         <StatCard icon='📏' label='Height' value={p.height_display || `${payload?.height_feet || '-'}ft ${payload?.height_inches || '-'}in`} />
         <StatCard icon='⚖️' label='Weight' value={`${p.weight_kg || payload?.weight_kg || '-'} kg`} />
@@ -66,7 +83,7 @@ export function Dashboard({ data, payload, workoutPreference = 'gym' }) {
     </Section>
 
     <Section title='Daily Targets & Macros'>
-      <div className='grid grid-cols-2 gap-4'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
         <StatCard icon='🍽️' label='Calories' value={`${t.daily_calories || '-'} kcal`} />
         <StatCard icon='🥩' label='Protein' value={`${t.protein_g || '-'} g`} />
         <StatCard icon='🍚' label='Carbs' value={`${t.carbs_g || '-'} g`} />
@@ -75,7 +92,7 @@ export function Dashboard({ data, payload, workoutPreference = 'gym' }) {
     </Section>
 
     <Section title='Hydration + Recovery'>
-      <div className='grid grid-cols-3 gap-3'>
+      <div className='grid grid-cols-1 sm:grid-cols-3 gap-3'>
         <StatCard icon='💧' label='Water' value={water} />
         <StatCard icon='😴' label='Sleep' value='7.5–8 hrs' />
         <StatCard icon='👣' label='Steps' value='8k–10k/day' />
