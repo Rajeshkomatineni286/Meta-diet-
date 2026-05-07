@@ -1,86 +1,61 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/index.css';
+import { requestOtp } from '../lib/firebase';
 
-const steps = ['Height + Weight', 'Goal', 'Diet Type', 'Workout Preference', 'Review & Payment'];
-
-function Card({ title, children }) {
-  return <motion.section initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} className='glass premium-card rounded-[24px] p-5 mb-5'><h3 className='text-[18px] font-semibold mb-3'>{title}</h3>{children}</motion.section>;
-}
+function Toast({ text }) { return text ? <div className='fixed bottom-24 left-1/2 -translate-x-1/2 bg-black/85 border border-white/15 rounded-xl px-4 py-2 text-sm z-50'>{text}</div> : null; }
+function Card({ title, sub, children }) { return <motion.section initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} className='bg-white/5 backdrop-blur-xl border border-white/10 rounded-[28px] p-7'><h2 className='text-[32px] font-bold leading-tight'>{title}</h2><p className='text-zinc-300 mt-2 text-sm'>{sub}</p><div className='mt-5'>{children}</div></motion.section>; }
 
 function App() {
   const [screen, setScreen] = useState('splash');
-  const [tab, setTab] = useState('home');
+  const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState(['','','','','','']);
-  const [step, setStep] = useState(0);
+  const otpRefs = useRef([]);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({height_feet:5,height_inches:8,weight_kg:72,goal_mode:'cut',diet_preference:'veg',workout_preference:'gym'});
+  const [toast, setToast] = useState('');
+  const [resend, setResend] = useState(30);
 
-  const loadingText = useMemo(() => ['Analyzing body metrics','Calculating nutrition','Building weekly split','Optimizing recovery','Preparing transformation strategy'], []);
+  useEffect(() => { if (screen==='splash') { const t=setTimeout(()=>setScreen('login'),2000); return ()=>clearTimeout(t);} }, [screen]);
+  useEffect(() => { if (screen !== 'otp' || resend <= 0) return; const t = setTimeout(()=>setResend(resend-1),1000); return ()=>clearTimeout(t); }, [screen, resend]);
+  const otpCode = useMemo(() => otp.join(''), [otp]);
 
-  React.useEffect(() => {
-    if (screen === 'splash') {
-      const t = setTimeout(() => setScreen('login'), 2000);
-      return () => clearTimeout(t);
-    }
-  }, [screen]);
+  const showToast = (msg) => { setToast(msg); setTimeout(()=>setToast(''),2500); };
 
-  const completePaymentAndGenerate = () => {
-    setLoading(true); setScreen('loading');
-    setTimeout(() => { setLoading(false); setScreen('plan'); }, 5200);
+  const sendOtp = async () => {
+    if (!/^\d{10}$/.test(phone)) return showToast('Enter a valid 10-digit number');
+    setLoading(true);
+    try { await requestOtp(phone); setScreen('otp'); setResend(30); showToast('OTP sent successfully'); }
+    catch (e) { console.error(e); showToast('OTP send failed. Check Firebase domains.'); }
+    finally { setLoading(false); }
   };
 
-  return <div className='max-w-[420px] mx-auto min-h-screen bg-black text-white overflow-x-hidden px-4 pt-5 pb-[120px]'>
+  const verifyOtp = async (code = otpCode) => {
+    if (code.length !== 6 || loading) return;
+    setLoading(true);
+    try { await window.confirmationResult.confirm(code); showToast('Login successful'); setTimeout(()=>setScreen('home'),500); }
+    catch (e) { console.error(e); showToast('Invalid or expired OTP'); }
+    finally { setLoading(false); }
+  };
+
+  const onOtpChange = (i, val) => {
+    const digit = val.replace(/\D/g,'').slice(-1);
+    const next = [...otp]; next[i] = digit; setOtp(next);
+    if (digit && i < 5) otpRefs.current[i+1]?.focus();
+    if (next.join('').length === 6) verifyOtp(next.join(''));
+  };
+
+  const onOtpKey = (i, e) => { if (e.key === 'Backspace' && !otp[i] && i>0) otpRefs.current[i-1]?.focus(); };
+
+  return <div className='max-w-[420px] mx-auto min-h-screen px-6 flex flex-col justify-center bg-[linear-gradient(180deg,#050816_0%,#0f172a_45%,#111827_100%)] text-white'>
+    <div id='recaptcha-container' />
     <AnimatePresence mode='wait'>
-      {screen === 'splash' && <motion.div key='splash' initial={{opacity:0,scale:.95}} animate={{opacity:1,scale:1}} className='min-h-[80vh] grid place-items-center text-center'>
-        <div><p className='text-3xl font-extrabold tracking-wide'>METADIET</p><p className='text-zinc-300 mt-2'>Precision Fitness Coaching</p></div>
-      </motion.div>}
-
-      {screen === 'login' && <motion.div key='login' initial={{opacity:0}} animate={{opacity:1}}>
-        <Card title='Welcome Back'><p className='text-sm text-zinc-300 mb-4'>Access your transformation dashboard.</p><input className='premium-input h-[58px] text-lg' placeholder='+91 Mobile Number'/><button className='generate-cta w-full h-[58px] mt-4' onClick={() => setScreen('otp')}>Continue</button></Card>
-      </motion.div>}
-
-      {screen === 'otp' && <motion.div key='otp' initial={{opacity:0}} animate={{opacity:1}}>
-        <Card title='Verify Your Number'><div className='grid grid-cols-6 gap-2'>{otp.map((v,i)=><input key={i} value={v} onChange={e=>{const n=[...otp];n[i]=e.target.value.slice(-1);setOtp(n);}} className='premium-input h-12 text-center text-lg'/>)}</div><button className='generate-cta w-full h-[58px] mt-4' onClick={() => setScreen('home')}>Verify OTP</button></Card>
-      </motion.div>}
-
-      {screen === 'home' && <motion.div key='home' initial={{opacity:0}} animate={{opacity:1}}>
-        <p className='text-[34px] leading-[1.05] font-extrabold mt-2 mb-3 max-w-[320px]'>Built Around Your Transformation</p>
-        <p className='text-[15px] leading-[1.8] opacity-80 mb-8'>Training, nutrition, recovery, and physique planning personalized for your goals.</p>
-        <button className='generate-cta w-full h-[58px] mb-8' onClick={() => setScreen('assessment')}>Start Assessment</button>
-      </motion.div>}
-
-      {screen === 'assessment' && <motion.div key='assess' initial={{opacity:0}} animate={{opacity:1}}>
-        <Card title={`Step ${step+1} of 5 — ${steps[step]}`}>
-          {step===0 && <div className='space-y-3'><input className='premium-input h-[58px]' value={form.height_feet} onChange={e=>setForm({...form,height_feet:Number(e.target.value)})}/><input className='premium-input h-[58px]' value={form.height_inches} onChange={e=>setForm({...form,height_inches:Number(e.target.value)})}/><input className='premium-input h-[58px]' value={form.weight_kg} onChange={e=>setForm({...form,weight_kg:Number(e.target.value)})}/></div>}
-          {step===1 && <div className='space-y-4'>{[['cut','Fat Loss'],['bulk','Muscle Building'],['maintain','Athletic Fitness']].map(([k,t])=><button key={k} onClick={()=>setForm({...form,goal_mode:k})} className={`w-full text-left rounded-2xl p-4 border ${form.goal_mode===k?'border-cyan-300 bg-cyan-200/10':'border-white/20'}`}>{t}</button>)}</div>}
-          {step===2 && <div className='grid grid-cols-3 gap-2'>{['veg','non_veg','eggetarian'].map(v=><button key={v} onClick={()=>setForm({...form,diet_preference:v})} className={`segment-pill ${form.diet_preference===v?'segment-pill-active':''}`}>{v}</button>)}</div>}
-          {step===3 && <div className='space-y-3'><button onClick={()=>setForm({...form,workout_preference:'gym'})} className={`w-full text-left rounded-2xl p-4 border ${form.workout_preference==='gym'?'border-cyan-300 bg-cyan-200/10':'border-white/20'}`}>Gym Training</button><button onClick={()=>setForm({...form,workout_preference:'home'})} className={`w-full text-left rounded-2xl p-4 border ${form.workout_preference==='home'?'border-cyan-300 bg-cyan-200/10':'border-white/20'}`}>Home Training</button></div>}
-          {step===4 && <div className='text-sm text-zinc-300'>Plan Includes: Weekly training split, meal strategy, hydration targets, recovery strategy and downloadable PDF.<button className='generate-cta w-full h-[58px] mt-4' onClick={completePaymentAndGenerate}>Pay ₹50 & Continue</button></div>}
-          {step<4 && <button className='generate-cta w-full h-[58px] mt-4' onClick={()=>setStep(step+1)}>Continue</button>}
-        </Card>
-      </motion.div>}
-
-      {screen === 'loading' && <motion.div key='loading' initial={{opacity:0}} animate={{opacity:1}} className='mt-20 text-center'>
-        <div className='scan-loader mx-auto mb-5'/>
-        {loadingText.map((t,i)=><p key={t} className='text-sm text-zinc-300 mt-2'>{t}</p>)}
-      </motion.div>}
-
-      {screen === 'plan' && <motion.div key='plan' initial={{opacity:0}} animate={{opacity:1}}>
-        <Card title='Summary Card'><p>Goal: {form.goal_mode}</p></Card>
-        <Card title='Transformation Timeline'><p className='text-sm'>Week 2, Week 4, Week 8, Week 12 milestones.</p></Card>
-        <Card title='Nutrition Targets'><p className='text-sm'>Calories, Protein, Carbs, Fats.</p></Card>
-        <Card title='Hydration & Recovery'><p className='text-sm'>Water, sleep, recovery recommendations.</p></Card>
-        <button className='generate-cta w-full h-[58px]'>Download My Plan PDF</button>
-      </motion.div>}
+      {screen==='splash' && <motion.div key='s' initial={{opacity:0,scale:.95}} animate={{opacity:1,scale:1}} className='text-center'><p className='text-3xl font-extrabold'>METADIET</p><p className='text-zinc-300 mt-2'>Precision Fitness Coaching</p></motion.div>}
+      {screen==='login' && <div key='l'><Card title='Welcome Back' sub='Continue your transformation journey.'><div className='flex items-center gap-2'><span className='h-[58px] px-4 grid place-items-center rounded-[18px] bg-white/5 border border-white/10'>+91</span><input value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,''))} className='premium-input h-[58px] text-lg' placeholder='Mobile Number'/></div><button disabled={loading} onClick={sendOtp} className='generate-cta w-full h-[58px] rounded-[18px] mt-4 font-bold'>{loading?'Sending...':'Continue'}</button></Card></div>}
+      {screen==='otp' && <div key='o'><Card title='Verify Your Number' sub={`Enter the 6-digit code sent to +91 ${phone}.`}><div className='flex justify-between gap-2'>{otp.map((v,i)=><input key={i} ref={el=>otpRefs.current[i]=el} value={v} disabled={loading} onChange={e=>onOtpChange(i,e.target.value)} onKeyDown={e=>onOtpKey(i,e)} className='w-12 h-[58px] rounded-2xl bg-white/5 border border-white/10 text-center text-2xl' />)}</div><button disabled={loading || otpCode.length!==6} onClick={()=>verifyOtp()} className='generate-cta w-full h-[58px] rounded-[18px] mt-4 font-bold'>{loading?'Verifying...':'Verify OTP'}</button><p className='text-sm text-zinc-300 mt-3 text-center'>{resend>0?`Resend OTP in ${resend}s`:<button onClick={sendOtp} className='text-cyan-300'>Resend OTP</button>}</p></Card></div>}
+      {screen==='home' && <div key='h' className='text-center'><motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}}><p className='text-2xl font-semibold'>Welcome back</p><p className='text-zinc-300 mt-2'>Redirecting to dashboard...</p></motion.div></div>}
     </AnimatePresence>
-
-    {screen !== 'splash' && screen !== 'login' && screen !== 'otp' && (
-      <nav className='fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[420px] h-[72px] bg-black/70 backdrop-blur border-t border-white/10 grid grid-cols-3 text-center'>
-        {['home','plans','profile'].map(t=><button key={t} onClick={()=>setTab(t)} className={`text-sm ${tab===t?'text-cyan-300':'text-zinc-400'}`}>{t==='home'?'🏠 Home':t==='plans'?'📋 My Plans':'👤 Profile'}</button>)}
-      </nav>
-    )}
+    <Toast text={toast} />
   </div>;
 }
 
