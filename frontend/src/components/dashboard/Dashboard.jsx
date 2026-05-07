@@ -48,7 +48,7 @@ export function Dashboard({ data, payload, workoutPreference = 'gym' }) {
   };
 
   return <div className='mt-8 space-y-8 pb-14'>
-    <Section title='Body Analytics'>
+    <Section title='Progress Overview'>
       <div className='grid grid-cols-2 gap-4'>
         <StatCard icon='🎯' label='Goal' value={p.goal_mode || payload?.goal_mode || '-'} />
         <StatCard icon='📏' label='Height' value={p.height_display || `${payload?.height_feet || '-'}ft ${payload?.height_inches || '-'}in`} />
@@ -57,7 +57,7 @@ export function Dashboard({ data, payload, workoutPreference = 'gym' }) {
       </div>
     </Section>
 
-    <Section title='Daily Targets'>
+    <Section title='Daily Targets & Macros'>
       <div className='grid grid-cols-2 gap-4'>
         <StatCard icon='🍽️' label='Calories' value={`${t.daily_calories || '-'} kcal`} />
         <StatCard icon='🥩' label='Protein' value={`${t.protein_g || '-'} g`} />
@@ -66,7 +66,7 @@ export function Dashboard({ data, payload, workoutPreference = 'gym' }) {
       </div>
     </Section>
 
-    <Section title='Water + Recovery'>
+    <Section title='Hydration + Recovery'>
       <div className='grid grid-cols-3 gap-3'>
         <StatCard icon='💧' label='Water' value={water} />
         <StatCard icon='😴' label='Sleep' value='7.5–8 hrs' />
@@ -87,7 +87,7 @@ export function Dashboard({ data, payload, workoutPreference = 'gym' }) {
               <div><p className='text-cyan-300 font-medium'>Warmup</p><p>{d.warmup.join(' • ')}</p></div>
               <div><p className='text-cyan-300 font-medium'>Exercises</p>{d.main.map((x) => <p key={x} className='mt-1'>{x}</p>)}</div>
               <div><p><b>Cardio:</b> {d.cardio}</p><p><b>Cooldown:</b> {d.cooldown}</p><p><b>Rest:</b> {d.rest}</p></div>
-              <p className='text-zinc-300'>Coach Tip: {d.tip}</p>
+              <p className='text-zinc-300'>Trainer Note: {d.tip}</p>
             </div>}
           </article>;
         })}
@@ -105,6 +105,6 @@ export function Dashboard({ data, payload, workoutPreference = 'gym' }) {
       </div>
     </Section>
 
-    <button onClick={downloadPdf} className='generate-cta w-full h-14 rounded-[20px] text-lg font-semibold'>Download My AI Plan PDF</button>
+    <button onClick={downloadPdf} className='generate-cta w-full h-14 rounded-[20px] text-lg font-semibold'>Download My Plan PDF</button>
   </div>;
 }

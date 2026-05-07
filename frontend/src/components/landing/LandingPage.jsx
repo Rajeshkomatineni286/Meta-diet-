@@ -128,16 +128,16 @@ export function LandingPage() {
     <NeuralBackground />
     <div className='relative z-10 w-full max-w-[420px] mx-auto px-[18px] pt-5 pb-14'>
       <section className='bg-[#111827] rounded-2xl p-6 sm:p-10 mb-6'>
-        <p className='coach-label text-center'>METADIET AI</p>
-        <h1 className='hero-title text-center text-[34px] sm:text-[42px]'>Upgrade Your Body Like Software.</h1>
-        <p className='coach-subtitle max-w-xl mx-auto text-center text-[15px] leading-[1.8] opacity-80 max-w-[320px] mx-auto'>Your AI coach builds a personalized fat-loss, muscle-building, and nutrition system designed specifically for your body.</p>
+        <p className='coach-label text-center'>METADIET</p>
+        <h1 className='hero-title text-center text-[34px] sm:text-[42px]'>Transform Your Physique With Precision</h1>
+        <p className='coach-subtitle max-w-xl mx-auto text-center text-[15px] leading-[1.8] opacity-80 max-w-[320px] mx-auto'>Personalized workout and nutrition plans designed for your body, goals, and lifestyle.</p>
         <div className='relative z-50 mt-6 max-w-md mx-auto'>
-          <button type='button' onClick={openOnboarding} className='generate-cta w-full h-[58px] px-7 rounded-[18px] text-lg font-bold shadow-[0_0_30px_rgba(103,232,249,0.35)] hover:scale-[1.01] transition'>Start AI Body Scan</button>
+          <button type='button' onClick={openOnboarding} className='generate-cta w-full h-[58px] px-7 rounded-[18px] text-lg font-bold shadow-[0_0_30px_rgba(103,232,249,0.35)] hover:scale-[1.01] transition'>Build My Plan</button>
         </div>
       </section>
 
       {showOnboarding && !isLoading && !result && <section ref={onboardingRef} className='bg-[#14532d] rounded-2xl max-w-[420px] mx-auto px-5 pt-8 pb-6'>
-        <p className='field-label text-white text-center text-xl'>Body Scan Setup</p>
+        <p className='field-label text-white text-center text-xl'>Program Setup</p>
 
         <div className='mt-7 space-y-7'>
           <div>
@@ -188,9 +188,9 @@ export function LandingPage() {
             })}</div>
           </div>
 
-          <button type='button' disabled={isLoading} className='generate-cta w-full h-14 text-lg font-semibold mt-6 disabled:opacity-60' onClick={generatePlan}>Generate My AI Fitness System</button>
+          <button type='button' disabled={isLoading} className='generate-cta w-full h-14 text-lg font-semibold mt-6 disabled:opacity-60' onClick={generatePlan}>Create My Fitness Plan</button>
           {error && <div className='mt-4 rounded-2xl border border-rose-300/40 bg-rose-500/10 p-4 text-left'>
-            <p className='text-base font-semibold text-rose-100'>Unable to generate AI plan right now.</p>
+            <p className='text-base font-semibold text-rose-100'>Unable to create your plan right now.</p>
             <p className='text-sm text-rose-200 mt-1'>Server connection issue detected. Please retry in a few seconds.</p>
           </div>}
         </div>
@@ -198,8 +198,8 @@ export function LandingPage() {
 
       {isLoading && <section className='bg-[#1e3a8a] rounded-2xl p-6 mt-6 text-center max-w-[420px] mx-auto'>
         <div className='scan-loader mx-auto mb-4' />
-        <p className='text-lg font-semibold'>Analyzing your body profile…</p>
-        <p className='text-zinc-200 text-sm mt-2'>Building nutrition + workout intelligence...</p>
+        <p className='text-lg font-semibold'>Analyzing your profile…</p>
+        <p className='text-zinc-200 text-sm mt-2'>Preparing workouts, nutrition, and recovery guidance...</p>
         <div className='mt-4 h-2 w-full bg-white/20 rounded-full overflow-hidden'><div className='h-full bg-gradient-to-r from-cyan-300 to-violet-300' style={{ width: `${progress}%` }} /></div>
       </section>}
 
