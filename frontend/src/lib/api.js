@@ -1,26 +1,23 @@
 import axios from 'axios';
 
-const fallbackBase = 'https://metadiet-backend.onrender.com';
-const rawBase = (import.meta.env.VITE_API_URL || fallbackBase).replace(/\/$/, '');
-const baseURL = rawBase.endsWith('/api/v1') ? rawBase : `${rawBase}/api/v1`;
+export const API_BASE_URL = (import.meta.env.VITE_API_URL || 'https://metadiet-backend.onrender.com').replace(/\/$/, '');
 
 const api = axios.create({
-  baseURL,
-  timeout: 20000,
+  baseURL: `${API_BASE_URL}/api/v1`,
+  timeout: 25000,
   headers: { 'Content-Type': 'application/json' },
 });
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const networkError = !error?.response;
-    console.error('API Error:', {
-      baseURL,
+    console.error('API ERROR:', {
+      baseURL: API_BASE_URL,
       url: error?.config?.url,
       method: error?.config?.method,
       status: error?.response?.status,
       data: error?.response?.data,
-      message: networkError ? 'Network error/CORS blocked or backend unreachable' : error?.message,
+      message: error?.message,
     });
     return Promise.reject(error);
   }

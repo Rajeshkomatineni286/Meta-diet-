@@ -187,5 +187,5 @@ export function LandingPage() {
 
       {result && <Dashboard data={result} payload={submittedPayload || form} workoutPreference={form.workout_preference} />}
     </div>
-  );
+  </div>;
 }
