@@ -37,9 +37,10 @@ export function Dashboard({ data, payload, workoutPreference = 'gym' }) {
   const t = data.targets || {}; const h = data.healthy_weight || {}; const p = data.profile || {};
   const workoutKey = workoutPreference === 'home' ? 'home_workout' : 'gym_workout';
   const burnKey = workoutPreference === 'home' ? 'estimated_burn_home' : 'estimated_burn_gym';
-  const plan7 = weeklyPlan(data.weekly_workout_plan || [], workoutKey, burnKey);
+  const plan7 = data.weekly_workout_plan?.length ? data.weekly_workout_plan : weeklyPlan(data.weekly_workout_plan || [], workoutKey, burnKey);
   const water = t.water_liters ? `${t.water_liters} L/day` : '3.0–3.5 L/day';
   const diet = data.daily_diet_plan || [];
+  const timeline = data.progress_expectations || [];
 
   const downloadPdf = async () => {
     const res = await api.post('/plans/export-pdf/', payload, { responseType: 'blob' });
@@ -54,6 +55,13 @@ export function Dashboard({ data, payload, workoutPreference = 'gym' }) {
         <StatCard icon='📏' label='Height' value={p.height_display || `${payload?.height_feet || '-'}ft ${payload?.height_inches || '-'}in`} />
         <StatCard icon='⚖️' label='Weight' value={`${p.weight_kg || payload?.weight_kg || '-'} kg`} />
         <StatCard icon='🔥' label='Healthy Range' value={h.range || 'Based on profile'} />
+      </div>
+    </Section>
+
+
+    <Section title='Expected Results Timeline'>
+      <div className='space-y-2 text-sm'>
+        {timeline.map((t) => <p key={t} className='rounded-xl bg-white/5 border border-white/10 p-3'>{t}</p>)}
       </div>
     </Section>
 
@@ -81,13 +89,13 @@ export function Dashboard({ data, payload, workoutPreference = 'gym' }) {
           return <article key={d.day} className='rounded-2xl bg-white/5 border border-white/10 p-4'>
             <button type='button' onClick={() => setExpandedDay(open ? '' : d.day)} className='w-full text-left'>
               <p className='font-semibold text-base'>{d.day} — {d.workoutName}</p>
-              <p className='text-xs text-zinc-300 mt-1'>Burn: {d.burn} • Difficulty: {d.difficulty}</p>
+              <p className='text-xs text-zinc-300 mt-1'>Burn: {d[burnKey] || d.burn} • Intensity: {d.intensity || d.difficulty}</p>
             </button>
             {open && <div className='mt-4 space-y-3 text-sm'>
-              <div><p className='text-cyan-300 font-medium'>Warmup</p><p>{d.warmup.join(' • ')}</p></div>
-              <div><p className='text-cyan-300 font-medium'>Exercises</p>{d.main.map((x) => <p key={x} className='mt-1'>{x}</p>)}</div>
-              <div><p><b>Cardio:</b> {d.cardio}</p><p><b>Cooldown:</b> {d.cooldown}</p><p><b>Rest:</b> {d.rest}</p></div>
-              <p className='text-zinc-300'>Trainer Note: {d.tip}</p>
+              <div><p className='text-cyan-300 font-medium'>Warmup</p><p>{Array.isArray(d.warmup) ? d.warmup.join(' • ') : d.warmup}</p></div>
+              <div><p className='text-cyan-300 font-medium'>Main Workout</p>{(d[workoutKey] || d.main || []).map((x) => <p key={x} className='mt-1'>{x}</p>)}</div>
+              <div><p><b>Duration:</b> {d.duration || '50-60 min'}</p><p><b>Intensity:</b> {d.intensity || d.difficulty || 'Moderate'}</p><p><b>Cardio:</b> {d.cardio}</p><p><b>Finisher:</b> {d.finisher || 'Core finisher 6 min'}</p><p><b>Cooldown:</b> {d.cooldown || 'Mobility cool down 5 min'}</p><p><b>Rest:</b> {d.rest_time || d.rest}</p></div>
+              <p className='text-zinc-300'>Trainer Note: {d.coach_tip || d.tip}</p>
             </div>}
           </article>;
         })}
