@@ -126,13 +126,13 @@ export function LandingPage() {
 
   return <div className='min-h-screen bg-[#050505] text-white relative'>
     <NeuralBackground />
-    <div className='relative z-10 max-w-4xl mx-auto px-4 py-8 sm:py-12'>
+    <div className='relative z-10 w-full max-w-[420px] mx-auto px-[18px] pt-5 pb-14'>
       <section className='bg-[#111827] rounded-2xl p-6 sm:p-10 mb-6'>
         <p className='coach-label text-center'>METADIET AI</p>
-        <h1 className='hero-title text-center text-5xl'>Upgrade Your Body Like Software.</h1>
-        <p className='coach-subtitle max-w-xl mx-auto text-center text-lg'>Your AI coach builds a personalized fat-loss, muscle-building, and nutrition system designed specifically for your body.</p>
+        <h1 className='hero-title text-center text-[34px] sm:text-[42px]'>Upgrade Your Body Like Software.</h1>
+        <p className='coach-subtitle max-w-xl mx-auto text-center text-[15px] leading-[1.8] opacity-80 max-w-[320px] mx-auto'>Your AI coach builds a personalized fat-loss, muscle-building, and nutrition system designed specifically for your body.</p>
         <div className='relative z-50 mt-6 max-w-md mx-auto'>
-          <button type='button' onClick={openOnboarding} className='generate-cta w-full min-h-14 text-lg font-semibold'>Start AI Body Scan</button>
+          <button type='button' onClick={openOnboarding} className='generate-cta w-full h-[58px] px-7 rounded-[18px] text-lg font-bold shadow-[0_0_30px_rgba(103,232,249,0.35)] hover:scale-[1.01] transition'>Start AI Body Scan</button>
         </div>
       </section>
 
