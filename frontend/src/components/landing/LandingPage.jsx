@@ -44,6 +44,7 @@ export function LandingPage() {
       goal: form.goal_mode,
       diet_type: form.diet_preference,
       workout_type: form.workout_preference,
+      experience_level: 'intermediate',
     };
 
     for (const [k, v] of Object.entries(payload)) {
@@ -69,6 +70,7 @@ export function LandingPage() {
       goal: form.goal_mode,
       diet_type: form.diet_preference,
       workout_type: form.workout_preference,
+      experience_level: 'intermediate',
     };
 
     setSubmittedPayload(payload);
@@ -115,6 +117,7 @@ export function LandingPage() {
       setProgress(100);
       setTimeout(() => { setResult(data); setIsLoading(false); }, 220);
     } catch (err) {
+      console.error('Plan generation error:', err);
       clearInterval(timer);
       setIsLoading(false);
       setError(err?.message || 'Unknown API error');
@@ -189,7 +192,6 @@ export function LandingPage() {
           {error && <div className='mt-4 rounded-2xl border border-rose-300/40 bg-rose-500/10 p-4 text-left'>
             <p className='text-base font-semibold text-rose-100'>Unable to generate AI plan right now.</p>
             <p className='text-sm text-rose-200 mt-1'>Server connection issue detected. Please retry in a few seconds.</p>
-            <p className='text-xs text-rose-100/80 mt-2 break-words'>{error}</p>
           </div>}
         </div>
       </section>}

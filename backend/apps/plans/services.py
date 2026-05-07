@@ -48,7 +48,7 @@ def workout_plan(goal: str, exp: str) -> List[dict]:
         _day('Wednesday','Legs + Shoulders',[f'Squat — {sets} x 8','RDL — 3 x 10','Leg Press — 3 x 12','OHP — 3 x 10'],[f'Jump Squat — {sets} x 12','Bulgarian Split Squat — 3 x 10','Pike Press — 3 x 10','Lateral Raise Band — 3 x 18'],'400-530 kcal','260-350 kcal','Intermediate','Keep tempo controlled and breathe out on effort.'),
     ]
 
-def build_body_intelligence(height_feet:int, height_inches:int, weight_kg:float, goal_mode:str, diet_preference:str, experience_level:str) -> Dict:
+def build_body_intelligence(height_feet:int, height_inches:int, weight_kg:float, goal_mode:str, diet_preference:str, experience_level:str='intermediate') -> Dict:
     cm = to_cm(height_feet, height_inches)
     low, high, ideal = healthy_weight_range(cm)
     calories = int((22 * weight_kg) + {'cut': -300, 'bulk': 280, 'maintain': 0}[goal_mode])

@@ -7,7 +7,7 @@ class BodyScanSerializer(serializers.Serializer):
     weight_kg = serializers.FloatField(min_value=30, max_value=250)
     goal_mode = serializers.ChoiceField(choices=['cut','bulk','maintain'])
     diet_preference = serializers.ChoiceField(choices=['veg', 'non_veg', 'eggetarian'])
-    experience_level = serializers.ChoiceField(choices=['beginner', 'intermediate'])
+    experience_level = serializers.ChoiceField(choices=['beginner', 'intermediate'], required=False, allow_blank=True, default='intermediate')
 
 class PlanSerializer(serializers.ModelSerializer):
     class Meta:
