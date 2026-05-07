@@ -3,9 +3,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-from django.http import FileResponse
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
+from django.http import FileResponse, HttpResponse
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet
 from .serializers import BodyScanSerializer, PlanSerializer
 from .models import Plan
 from .services import build_body_intelligence
@@ -31,24 +32,91 @@ class ExportPlanPdfView(APIView):
         s = BodyScanSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         plan = build_body_intelligence(**s.validated_data)
-        buff = BytesIO(); c = canvas.Canvas(buff, pagesize=A4); y=800
-        c.setFont('Helvetica-Bold',16); c.drawString(40,y,'METADIET Transformation Plan'); y-=28
-        c.setFont('Helvetica',11)
-        c.drawString(40,y,f"Height: {plan['profile']['height_display']}  Weight: {plan['profile']['weight_kg']} kg"); y-=18
-        c.drawString(40,y,f"Healthy Range: {plan['healthy_weight']['range']}  Ideal: {plan['healthy_weight']['ideal']}"); y-=24
-        c.drawString(40,y,f"Calories: {plan['targets']['daily_calories']}  Protein: {plan['targets']['protein_g']}g  Water: {plan['targets']['water_liters']}L"); y-=24
-        c.setFont('Helvetica-Bold',12); c.drawString(40,y,'Diet Plan'); y-=18; c.setFont('Helvetica',10)
-        for m in plan['daily_diet_plan']:
-            c.drawString(40,y,f"{m['meal']}: {m['dish']} ({m['calories_kcal']} kcal, P{m['protein_g']} C{m['carbs_g']} F{m['fat_g']})"); y-=14
-        y-=10; c.setFont('Helvetica-Bold',12); c.drawString(40,y,'Workout Plan'); y-=18; c.setFont('Helvetica',10)
+
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=30)
+        styles = getSampleStyleSheet()
+        elements = []
+
+        elements.append(Paragraph('METADIET Transformation Plan', styles['Title']))
+        elements.append(Spacer(1, 16))
+
+        profile = plan['profile']
+        targets = plan['targets']
+        healthy = plan['healthy_weight']
+
+        summary = Paragraph(
+            f"""
+            Height: {profile.get('height_display')}<br/>
+            Weight: {profile.get('weight_kg')} kg<br/>
+            Goal: {profile.get('goal_mode')}<br/>
+            BMI: {profile.get('bmi')}<br/>
+            Healthy Weight Range: {healthy.get('range')}<br/>
+            Calories: {targets.get('daily_calories')} kcal<br/>
+            Protein: {targets.get('protein_g')} g<br/>
+            Carbs: {targets.get('carbs_g')} g<br/>
+            Fats: {targets.get('fat_g')} g<br/>
+            Water Intake: {targets.get('water_liters')} L/day
+            """, styles['BodyText']
+        )
+        elements.extend([summary, Spacer(1, 18)])
+
+        elements.append(Paragraph('Weekly Workout Plan', styles['Heading2']))
+        elements.append(Spacer(1, 8))
+
         workout_pref = request.data.get('workout_type', 'gym')
         key = 'home_workout' if workout_pref == 'home' else 'gym_workout'
-        for d in plan['weekly_workout_plan']:
-            c.drawString(40,y,f"{d['day']} - {d.get('focus', d.get('workout_name', 'Workout'))}"); y-=13
-            for ex in d.get(key, [])[:3]:
-                c.drawString(60,y,f"• {ex}"); y-=12
-        c.showPage(); c.save(); buff.seek(0)
-        return FileResponse(buff, as_attachment=True, filename='metadiet-plan.pdf', content_type='application/pdf')
+
+        for day in plan['weekly_workout_plan']:
+            day_block = Paragraph(
+                f"""
+                <b>{day.get('day')} - {day.get('focus', day.get('workout_name', 'Workout'))}</b><br/>
+                Duration: {day.get('duration', '50-60 min')}<br/>
+                Intensity: {day.get('intensity', 'Moderate')}<br/>
+                Burn: {day.get('estimated_burn_home') if workout_pref == 'home' else day.get('estimated_burn_gym')}<br/>
+                Rest: {day.get('rest_time')}<br/>
+                Warmup: {day.get('warmup')}<br/>
+                Main Workout:<br/>
+                {'<br/>'.join(day.get(key, []))}<br/>
+                Cardio: {day.get('cardio')}<br/>
+                Finisher: {day.get('finisher')}<br/>
+                Recovery Tip: {day.get('coach_tip')}
+                """, styles['BodyText']
+            )
+            elements.extend([day_block, Spacer(1, 12)])
+
+        elements.append(PageBreak())
+        elements.append(Paragraph('Detailed Nutrition Plan', styles['Heading2']))
+        elements.append(Spacer(1, 8))
+
+        for meal in plan['daily_diet_plan']:
+            meal_block = Paragraph(
+                f"""
+                <b>{meal.get('meal')} - {meal.get('time')}</b><br/>
+                {meal.get('dish')}<br/>
+                {'<br/>'.join(meal.get('items', []))}<br/>
+                Calories: {meal.get('calories_kcal')} kcal<br/>
+                Protein: {meal.get('protein_g')} g<br/>
+                Carbs: {meal.get('carbs_g')} g<br/>
+                Fats: {meal.get('fat_g')} g
+                """, styles['BodyText']
+            )
+            elements.extend([meal_block, Spacer(1, 10)])
+
+        elements.append(Spacer(1, 8))
+        elements.append(Paragraph('Expected Progress Timeline', styles['Heading2']))
+        elements.append(Spacer(1, 8))
+        timeline = '<br/>'.join(plan.get('progress_expectations', []))
+        elements.append(Paragraph(timeline, styles['BodyText']))
+
+        doc.build(elements)
+        pdf = buffer.getvalue()
+        buffer.close()
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="fitness-plan.pdf"'
+        response.write(pdf)
+        return response
 
 class PlanDetailView(APIView):
     def get(self, request, pk):
