@@ -133,10 +133,10 @@ export function LandingPage() {
         </div>
       </section>
 
-      {showOnboarding && !isLoading && !result && <section ref={onboardingRef} className='bg-[#14532d] rounded-2xl max-w-[440px] mx-auto px-5 pt-8 pb-6'>
+      {showOnboarding && !isLoading && !result && <section ref={onboardingRef} className='bg-[#14532d] rounded-2xl max-w-[420px] mx-auto px-5 pt-8 pb-6'>
         <p className='field-label text-white text-center text-xl'>Body Scan Setup</p>
 
-        <div className='mt-6 space-y-6'>
+        <div className='mt-7 space-y-7'>
           <div>
             <label className='block mb-[10px] text-base'>Height</label>
             <div className='grid grid-cols-2 gap-[14px]'>
@@ -185,7 +185,7 @@ export function LandingPage() {
             })}</div>
           </div>
 
-          <button type='button' disabled={isLoading} className='generate-cta w-full h-14 text-lg font-semibold mt-6 disabled:opacity-60' onClick={generatePlan}>Generate My AI Fitness Plan</button>
+          <button type='button' disabled={isLoading} className='generate-cta w-full h-14 text-lg font-semibold mt-6 disabled:opacity-60' onClick={generatePlan}>Generate My AI Fitness System</button>
           {error && <div className='mt-4 rounded-2xl border border-rose-300/40 bg-rose-500/10 p-4 text-left'>
             <p className='text-base font-semibold text-rose-100'>Unable to generate AI plan right now.</p>
             <p className='text-sm text-rose-200 mt-1'>Server connection issue detected. Please retry in a few seconds.</p>
@@ -194,7 +194,7 @@ export function LandingPage() {
         </div>
       </section>}
 
-      {isLoading && <section className='bg-[#1e3a8a] rounded-2xl p-6 mt-6 text-center max-w-[440px] mx-auto'>
+      {isLoading && <section className='bg-[#1e3a8a] rounded-2xl p-6 mt-6 text-center max-w-[420px] mx-auto'>
         <div className='scan-loader mx-auto mb-4' />
         <p className='text-lg font-semibold'>Analyzing your body profile…</p>
         <p className='text-zinc-200 text-sm mt-2'>Building nutrition + workout intelligence...</p>
