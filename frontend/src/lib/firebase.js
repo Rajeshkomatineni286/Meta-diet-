@@ -10,19 +10,19 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean);
-export const auth = hasFirebaseConfig ? getAuth(initializeApp(firebaseConfig)) : null;
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
 
-export const setupRecaptcha = () => {
-  if (!auth) throw new Error('Firebase environment variables are missing.');
+export const ensureRecaptcha = () => {
   if (!window.recaptchaVerifier) {
-    window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', { size: 'invisible' }, auth);
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
   }
   return window.recaptchaVerifier;
 };
 
-export const sendOtpCode = async (phoneNumber) => {
-  const verifier = setupRecaptcha();
-  const result = await signInWithPhoneNumber(auth, `+91${phoneNumber}`, verifier);
-  window.confirmationResult = result;
+export const requestOtp = async (phoneNumber) => {
+  const appVerifier = ensureRecaptcha();
+  const confirmationResult = await signInWithPhoneNumber(auth, `+91${phoneNumber}`, appVerifier);
+  window.confirmationResult = confirmationResult;
+  return confirmationResult;
 };
