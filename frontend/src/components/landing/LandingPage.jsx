@@ -91,7 +91,19 @@ export function LandingPage() {
       });
 
       console.log('Status:', response.status);
-      const data = await response.json();
+      const responseText = await response.text();
+      console.log('RAW RESPONSE:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        if (responseText.trim().toLowerCase().startsWith('<!doctype html') || responseText.trim().startsWith('<html')) {
+          throw new Error('Backend returned HTML instead of JSON. Check API_BASE_URL and backend route.');
+        }
+        throw new Error('Invalid JSON response from backend.');
+      }
+
       console.log('Response data:', data);
 
       if (!response.ok) {
@@ -174,7 +186,11 @@ export function LandingPage() {
           </div>
 
           <button type='button' disabled={isLoading} className='generate-cta w-full h-14 text-lg font-semibold mt-6 disabled:opacity-60' onClick={generatePlan}>Generate My AI Fitness Plan</button>
-          {error && <p className='text-rose-200 text-base mt-3'>{error}</p>}
+          {error && <div className='mt-4 rounded-2xl border border-rose-300/40 bg-rose-500/10 p-4 text-left'>
+            <p className='text-base font-semibold text-rose-100'>Unable to generate AI plan right now.</p>
+            <p className='text-sm text-rose-200 mt-1'>Server connection issue detected. Please retry in a few seconds.</p>
+            <p className='text-xs text-rose-100/80 mt-2 break-words'>{error}</p>
+          </div>}
         </div>
       </section>}
 
