@@ -19,11 +19,31 @@ class PlansRootView(APIView):
 
 class BodyScanView(APIView):
     permission_classes = [AllowAny]
+
     def post(self, request):
         s = BodyScanSerializer(data=request.data)
         if not s.is_valid():
             return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        if request.user.is_authenticated:
+            generated_count = Plan.objects.filter(user=request.user).count()
+            if generated_count >= 3:
+                return Response({'error': 'Generation limit reached', 'message': 'You have reached your 3-plan limit. Please upgrade to continue.'}, status=status.HTTP_403_FORBIDDEN)
+
         intel = build_body_intelligence(**s.validated_data)
+
+        if request.user.is_authenticated:
+            Plan.objects.create(
+                user=request.user,
+                diet_plan=intel.get('daily_diet_plan', {}),
+                workout_plan=intel.get('weekly_workout_plan', {}),
+                calories=intel.get('targets', {}).get('daily_calories', 0),
+                protein_g=intel.get('targets', {}).get('protein_g', 0),
+                fat_g=intel.get('targets', {}).get('fat_g', 0),
+                is_locked=not request.user.premium_unlocked,
+            )
+            intel['plans_remaining'] = max(0, 3 - Plan.objects.filter(user=request.user).count())
+
         return Response({**intel, 'message': 'Your personalized transformation coach is ready.'})
 
 class ExportPlanPdfView(APIView):
