@@ -34,8 +34,6 @@ const weeklyPlan = (plan = [], workoutKey, burnKey) => days.map((day, i) => {
 
 export function Dashboard({ data, payload, workoutPreference = 'gym' }) {
   const [expandedDay, setExpandedDay] = useState('Monday');
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [toast, setToast] = useState('');
   const t = data.targets || {}; const h = data.healthy_weight || {}; const p = data.profile || {};
   const workoutKey = workoutPreference === 'home' ? 'home_workout' : 'gym_workout';
   const burnKey = workoutPreference === 'home' ? 'estimated_burn_home' : 'estimated_burn_gym';
@@ -56,14 +54,8 @@ export function Dashboard({ data, payload, workoutPreference = 'gym' }) {
   };
 
   const downloadPdf = async () => {
-    if (isDownloading) return;
-    setIsDownloading(true);
-    setToast('Preparing your transformation plan...');
     try {
-      await fetch(API_BASE_URL);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      const response = await fetch(`${API_BASE_URL}/api/export-plan/`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/export-plan/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -71,26 +63,23 @@ export function Dashboard({ data, payload, workoutPreference = 'gym' }) {
       if (!response.ok) throw new Error(`Primary export endpoint failed (${response.status})`);
       const blob = await response.blob();
       triggerDownload(blob);
-      setToast('Download started successfully.');
+      return;
     } catch (primaryError) {
       console.error('Primary download endpoint failed:', primaryError);
-      try {
-        const fallback = await fetch(`${API_BASE_URL}/api/v1/plans/export-pdf/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (!fallback.ok) throw new Error(`Fallback export endpoint failed (${fallback.status})`);
-        const blob = await fallback.blob();
-        triggerDownload(blob);
-        setToast('Download started successfully.');
-      } catch (fallbackError) {
-        console.error('Fallback download endpoint failed:', fallbackError);
-        setToast('Unable to download workout plan right now.');
-      }
-    } finally {
-      setIsDownloading(false);
-      setTimeout(() => setToast(''), 2600);
+    }
+
+    try {
+      const fallback = await fetch(`${API_BASE_URL}/api/v1/plans/export-pdf/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!fallback.ok) throw new Error(`Fallback export endpoint failed (${fallback.status})`);
+      const blob = await fallback.blob();
+      triggerDownload(blob);
+    } catch (fallbackError) {
+      console.error('Fallback download endpoint failed:', fallbackError);
+      alert('Unable to download workout plan right now. Please try again.');
     }
   };
 
@@ -159,7 +148,6 @@ export function Dashboard({ data, payload, workoutPreference = 'gym' }) {
       </div>
     </Section>
 
-    <button onClick={downloadPdf} disabled={isDownloading} className='generate-cta w-full h-14 rounded-[20px] text-lg font-semibold disabled:opacity-60'>{isDownloading ? 'Generating PDF...' : 'Download My Plan PDF'}</button>
-    {toast && <div className='fixed bottom-5 left-1/2 -translate-x-1/2 rounded-xl bg-black/85 border border-white/15 px-4 py-2 text-sm z-50'>{toast}</div>}
+    <button onClick={downloadPdf} className='generate-cta w-full h-14 rounded-[20px] text-lg font-semibold'>Download My Plan PDF</button>
   </div>;
 }
