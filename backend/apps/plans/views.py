@@ -41,9 +41,12 @@ class ExportPlanPdfView(APIView):
         for m in plan['daily_diet_plan']:
             c.drawString(40,y,f"{m['meal']}: {m['dish']} ({m['calories_kcal']} kcal, P{m['protein_g']} C{m['carbs_g']} F{m['fat_g']})"); y-=14
         y-=10; c.setFont('Helvetica-Bold',12); c.drawString(40,y,'Workout Plan'); y-=18; c.setFont('Helvetica',10)
+        workout_pref = request.data.get('workout_type', 'gym')
+        key = 'home_workout' if workout_pref == 'home' else 'gym_workout'
         for d in plan['weekly_workout_plan']:
-            c.drawString(40,y,f"{d['day']} - {d['focus']}"); y-=13
-            for ex in d['exercises'][:3]: c.drawString(60,y,f"• {ex}"); y-=12
+            c.drawString(40,y,f"{d['day']} - {d.get('focus', d.get('workout_name', 'Workout'))}"); y-=13
+            for ex in d.get(key, [])[:3]:
+                c.drawString(60,y,f"• {ex}"); y-=12
         c.showPage(); c.save(); buff.seek(0)
         return FileResponse(buff, as_attachment=True, filename='metadiet-plan.pdf', content_type='application/pdf')
 
